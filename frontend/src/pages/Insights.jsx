@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { 
   Lightbulb, ShieldAlert, Calendar, FileCheck, CheckSquare, 
   Info, ArrowRight, BookOpen, Search, GitCompare,

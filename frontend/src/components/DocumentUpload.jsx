@@ -95,31 +95,38 @@ export default function DocumentUpload({ onUploadComplete }) {
       </div>
 
       {!selectedFile && (
-        <div 
-          className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${
-            isDragging ? 'border-brand-500 bg-brand-500/5' : 'border-surface-border hover:border-brand-500/50 hover:bg-surface-card/50'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            className="hidden" 
-            accept=".pdf,.docx,.txt,.csv"
-          />
-          <div className="w-16 h-16 rounded-full bg-surface-dark border border-surface-border flex items-center justify-center mb-4 text-slate-400">
-            <UploadCloud className="w-8 h-8" />
+        <div className="space-y-4">
+          <div 
+            className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${
+              isDragging ? 'border-brand-500 bg-brand-500/5' : 'border-surface-border hover:border-brand-500/50 hover:bg-surface-card/50'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              className="hidden" 
+              accept=".pdf,.docx,.txt,.csv"
+            />
+            <div className="w-16 h-16 rounded-full bg-surface-dark border border-surface-border flex items-center justify-center mb-4 text-slate-400">
+              <UploadCloud className="w-8 h-8" />
+            </div>
+            <p className="text-white font-medium mb-1">Drag & Drop your files here</p>
+            <p className="text-sm text-slate-400 mb-4">or</p>
+            <Button variant="secondary" className="max-w-[200px]" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
+              Choose Files
+            </Button>
+            <p className="text-xs text-slate-500 mt-4">Accepted demo types: PDF, DOCX, TXT, CSV</p>
           </div>
-          <p className="text-white font-medium mb-1">Drag & Drop your files here</p>
-          <p className="text-sm text-slate-400 mb-4">or</p>
-          <Button variant="secondary" className="max-w-[200px]" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
-            Choose Files
-          </Button>
-          <p className="text-xs text-slate-500 mt-4">Accepted demo types: PDF, DOCX, TXT, CSV</p>
+          
+          <div className="flex items-center gap-2 justify-center text-[11px] text-slate-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            Your uploaded documents are used securely to provide information analysis within the application.
+          </div>
         </div>
       )}
 

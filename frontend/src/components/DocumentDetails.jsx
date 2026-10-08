@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Calendar, FileCheck, CheckSquare, ShieldAlert, ArrowDown, Lightbulb, Info } from 'lucide-react';
+import { X, Calendar, FileCheck, CheckSquare, ShieldAlert, ArrowDown, Lightbulb } from 'lucide-react';
 import Button from './Button';
 
 export default function DocumentDetails({ document, onClose }) {

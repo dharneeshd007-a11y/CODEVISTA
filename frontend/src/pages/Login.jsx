@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
 import InputField from '../components/InputField';
 import PasswordInput from '../components/PasswordInput';
@@ -7,6 +7,7 @@ import Button from '../components/Button';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -29,6 +30,18 @@ export default function Login() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  // Auto Demo Handler
+  React.useEffect(() => {
+    if (location.state?.autoDemo) {
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+        localStorage.setItem('auth_token', 'demo_token_123');
+        navigate('/dashboard', { state: { autoDemo: true } });
+      }, 500);
+    }
+  }, [location, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

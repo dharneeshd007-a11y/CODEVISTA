@@ -1,6 +1,6 @@
 import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { User, Bell, Monitor, Info, ShieldAlert } from 'lucide-react';
+import { User, Bell, Monitor, Info } from 'lucide-react';
 import Button from '../components/Button';
 import { useWorkflow } from '../context/WorkflowContext';
 

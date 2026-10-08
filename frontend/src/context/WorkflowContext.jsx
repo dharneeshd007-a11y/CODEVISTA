@@ -22,10 +22,26 @@ const INITIAL_DOCUMENTS = [
   },
   {
     id: 'demo-3',
-    name: 'Project Guidelines',
-    type: 'TXT',
+    name: 'Meeting Report',
+    type: 'PDF',
     status: 'Processed',
     lastUpdated: '15 Oct 2026',
+    isDemo: true
+  },
+  {
+    id: 'demo-4',
+    name: 'Budget Report',
+    type: 'XLSX',
+    status: 'Processed',
+    lastUpdated: '16 Oct 2026',
+    isDemo: true
+  },
+  {
+    id: 'demo-5',
+    name: 'Client Requirements',
+    type: 'DOCX',
+    status: 'Processed',
+    lastUpdated: '18 Oct 2026',
     isDemo: true
   }
 ];

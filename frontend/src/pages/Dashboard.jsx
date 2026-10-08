@@ -1,15 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FileText, Lightbulb, AlertTriangle, CheckSquare, Search, GitCompare, Upload, ArrowRight, CheckCircle2 } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import WorkflowCard from '../components/WorkflowCard';
 import QuickActionCard from '../components/QuickActionCard';
 import DashboardLayout from '../components/DashboardLayout';
-import { Link } from 'react-router-dom';
+import DemoGuideModal from '../components/DemoGuideModal';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Dashboard() {
   const { conflictMetrics, actionMetrics, conflicts, actions, isDemoMode, enableDemoMode, dashboardStats } = useWorkflow();
+  const [isDemoGuideOpen, setIsDemoGuideOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (location.state?.autoDemo && !isDemoMode) {
+      enableDemoMode();
+      setIsDemoGuideOpen(true);
+      // Clear state so it doesn't re-trigger on refresh
+      navigate('/dashboard', { replace: true, state: {} });
+    }
+  }, [location.state, isDemoMode, enableDemoMode, navigate]);
 
   const activeConflict = conflicts[0];
   const activeAction = actions[0];
@@ -33,6 +46,9 @@ export default function Dashboard() {
             <p className="text-slate-400 text-lg mt-1">Turn scattered information into clear, actionable insights.</p>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={() => setIsDemoGuideOpen(true)} className="w-full md:w-auto px-6 py-2.5">
+              Demo Guide
+            </Button>
             {!isDemoMode && (
               <Button variant="secondary" onClick={enableDemoMode} className="w-full md:w-auto px-6 py-2.5">
                 Load Demo Data
@@ -406,6 +422,7 @@ export default function Dashboard() {
 
         </div>
       </div>
+      <DemoGuideModal isOpen={isDemoGuideOpen} onClose={() => setIsDemoGuideOpen(false)} />
     </DashboardLayout>
   );
 }
