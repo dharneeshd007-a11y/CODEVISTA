@@ -9,7 +9,7 @@ import Button from '../components/Button';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Dashboard() {
-  const { conflictMetrics, actionMetrics, conflicts, actions } = useWorkflow();
+  const { documents, conflictMetrics, actionMetrics, conflicts, actions, recentActivity } = useWorkflow();
 
   const activeConflict = conflicts[0];
   const activeAction = actions[0];
@@ -46,7 +46,7 @@ export default function Dashboard() {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <StatCard
             title="Total documents"
-            value="2"
+            value={documents.length.toString()}
             icon={FileText}
           />
           <StatCard
@@ -199,9 +199,77 @@ export default function Dashboard() {
                 </div>
               )}
             </section>
+            {/* Needs Your Attention Section */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Needs Your Attention</h3>
+              </div>
+              
+              {conflictMetrics.unresolvedCount > 0 || actionMetrics.pending > 0 ? (
+                <div className="space-y-3">
+                  {conflicts.filter(c => c.status !== 'Resolved' && c.priority === 'High').map(conflict => (
+                    <div key={conflict.id} className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="text-sm font-bold text-rose-300">⚠ {conflict.title}</h4>
+                          <p className="text-xs text-slate-300 mt-1">{conflict.relatedConflict || conflict.sourceA.documentName + ' vs ' + conflict.sourceB.documentName}</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">Status: {conflict.status}</p>
+                        </div>
+                      </div>
+                      <Link to="/conflicts">
+                        <Button className="px-3 py-1.5 text-xs bg-rose-500 hover:bg-rose-400">Review</Button>
+                      </Link>
+                    </div>
+                  ))}
+                  {actions.filter(a => a.status === 'Pending' && a.priority === 'High').map(action => (
+                    <div key={action.id} className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <CheckSquare className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="text-sm font-bold text-amber-300">Action: {action.title}</h4>
+                          <p className="text-xs text-slate-300 mt-1">Status: {action.status}</p>
+                        </div>
+                      </div>
+                      <Link to="/actions">
+                        <Button variant="secondary" className="px-3 py-1.5 text-xs">Review</Button>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="glass-card rounded-2xl p-6 text-center border border-surface-border">
+                  <p className="text-sm text-slate-400">You're all caught up.</p>
+                </div>
+              )}
+            </section>
           </div>
 
           <div className="xl:col-span-1 space-y-8">
+            {/* Recent Activity Section */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
+              </div>
+              
+              {recentActivity && recentActivity.length > 0 ? (
+                <div className="space-y-3">
+                  {recentActivity.map((activity, index) => (
+                    <div key={activity.id || index} className="p-3 rounded-xl bg-surface-card border border-surface-border flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-brand-500 mt-1.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-white">{activity.message}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{activity.timestamp}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="glass-card rounded-2xl p-6 text-center border-dashed border-2 border-surface-border">
+                  <p className="text-xs text-slate-400">No recent activity.</p>
+                </div>
+              )}
+            </section>
             {/* Recent Insights / Conflict Spotlight */}
             <section>
               <div className="flex items-center justify-between mb-4">
@@ -265,27 +333,22 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-2.5">
-                <div className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <FileText className="w-4 h-4 text-brand-400" />
-                    <div>
-                      <div className="text-xs font-bold text-white">Project Proposal</div>
-                      <div className="text-[11px] text-slate-400">PDF • Oct 20, 2026 reference</div>
+                {documents.slice(0, 3).map(doc => (
+                  <div key={doc.id} className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <FileText className="w-4 h-4 text-brand-400" />
+                      <div>
+                        <div className="text-xs font-bold text-white">{doc.name}</div>
+                        <div className="text-[11px] text-slate-400">{doc.type} • {doc.lastUpdated}</div>
+                      </div>
                     </div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                      doc.status === 'Processed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-brand-500/10 text-brand-400'
+                    }`}>
+                      {doc.status}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">Analyzed</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <FileText className="w-4 h-4 text-brand-400" />
-                    <div>
-                      <div className="text-xs font-bold text-white">Project Requirements</div>
-                      <div className="text-[11px] text-slate-400">DOCX • Oct 25, 2026 reference</div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400">Conflict</span>
-                </div>
+                ))}
               </div>
             </section>
           </div>

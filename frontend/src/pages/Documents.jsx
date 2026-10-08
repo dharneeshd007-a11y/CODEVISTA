@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, FileText, AlertTriangle, ArrowRight } from 'lucide-react';
+import { useWorkflow } from '../context/WorkflowContext';
 import DashboardLayout from '../components/DashboardLayout';
 import DocumentUpload from '../components/DocumentUpload';
 import DocumentTable from '../components/DocumentTable';
@@ -8,46 +9,19 @@ import DocumentDetails from '../components/DocumentDetails';
 import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 
-const DEMO_DOCUMENTS = [
-  {
-    id: 'demo-1',
-    name: 'Project Proposal',
-    type: 'PDF',
-    status: 'Processed',
-    lastUpdated: '10 Oct 2026',
-    isDemo: true
-  },
-  {
-    id: 'demo-2',
-    name: 'Project Requirements',
-    type: 'DOCX',
-    status: 'Processed',
-    lastUpdated: '12 Oct 2026',
-    isDemo: true
-  },
-  {
-    id: 'demo-3',
-    name: 'Project Guidelines',
-    type: 'TXT',
-    status: 'Processed',
-    lastUpdated: '15 Oct 2026',
-    isDemo: true
-  }
-];
-
 export default function Documents() {
-  const [documents, setDocuments] = useState(DEMO_DOCUMENTS);
+  const { documents, addDocument, removeDocument } = useWorkflow();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('All');
   const [selectedDoc, setSelectedDoc] = useState(null);
 
   const handleUploadComplete = (newDoc) => {
-    setDocuments([newDoc, ...documents]);
+    addDocument(newDoc);
   };
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to remove this document?')) {
-      setDocuments(documents.filter(doc => doc.id !== id));
+      removeDocument(id);
     }
   };
 

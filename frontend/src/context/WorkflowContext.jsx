@@ -3,6 +3,38 @@ import React, { createContext, useContext, useState } from 'react';
 
 const WorkflowContext = createContext(null);
 
+const INITIAL_DOCUMENTS = [
+  {
+    id: 'demo-1',
+    name: 'Project Proposal',
+    type: 'PDF',
+    status: 'Processed',
+    lastUpdated: '10 Oct 2026',
+    isDemo: true
+  },
+  {
+    id: 'demo-2',
+    name: 'Project Requirements',
+    type: 'DOCX',
+    status: 'Processed',
+    lastUpdated: '12 Oct 2026',
+    isDemo: true
+  },
+  {
+    id: 'demo-3',
+    name: 'Project Guidelines',
+    type: 'TXT',
+    status: 'Processed',
+    lastUpdated: '15 Oct 2026',
+    isDemo: true
+  }
+];
+
+const INITIAL_RECENT_ACTIVITY = [
+  { id: 'act-1', message: 'Project Proposal was added', timestamp: '10 Oct 2026' },
+  { id: 'act-2', message: 'Conflict detected between Project Proposal and Project Requirements', timestamp: '12 Oct 2026' }
+];
+
 const INITIAL_CONFLICTS = [
   {
     id: 'conflict-deadline-01',
@@ -49,9 +81,15 @@ const INITIAL_ACTIONS = [
 ];
 
 export function WorkflowProvider({ children }) {
+  const [documents, setDocuments] = useState(INITIAL_DOCUMENTS);
   const [conflicts, setConflicts] = useState(INITIAL_CONFLICTS);
   const [actions, setActions] = useState(INITIAL_ACTIONS);
+  const [recentActivity, setRecentActivity] = useState(INITIAL_RECENT_ACTIVITY);
   const [toasts, setToasts] = useState([]);
+
+  const addActivity = (message) => {
+    setRecentActivity(prev => [{ id: `act-${Date.now()}`, message, timestamp: 'Just now' }, ...prev]);
+  };
 
   // Toast notification helper
   const showToast = (message, type = 'success') => {
@@ -66,6 +104,20 @@ export function WorkflowProvider({ children }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  // Document Management
+  const addDocument = (doc) => {
+    setDocuments((prev) => [doc, ...prev]);
+    addActivity(`Document "${doc.name}" was added`);
+    showToast(`Document "${doc.name}" processed successfully`, 'success');
+  };
+
+  const removeDocument = (id) => {
+    const doc = documents.find(d => d.id === id);
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
+    if (doc) addActivity(`Document "${doc.name}" was deleted`);
+    showToast('Document deleted', 'info');
+  };
+
   // Conflict state management
   const updateConflictStatus = (conflictId, newStatus) => {
     setConflicts((prev) =>
@@ -73,8 +125,10 @@ export function WorkflowProvider({ children }) {
     );
     if (newStatus === 'Resolved') {
       showToast('Conflict marked as resolved', 'success');
+      addActivity('A conflict was resolved');
     } else {
       showToast(`Conflict status updated to ${newStatus}`, 'info');
+      addActivity(`Conflict status updated to ${newStatus}`);
     }
   };
 
@@ -114,6 +168,7 @@ export function WorkflowProvider({ children }) {
       prev.map((c) => (c.id === conflictId ? { ...c, actionCreated: true } : c))
     );
     showToast('Action created successfully', 'success');
+    addActivity(`Action created: ${newAction.title}`);
     return newAction;
   };
 
@@ -141,13 +196,22 @@ export function WorkflowProvider({ children }) {
 
   // Update action status
   const updateActionStatus = (actionId, newStatus) => {
+    let actionTitle = '';
     setActions((prev) =>
-      prev.map((a) => (a.id === actionId ? { ...a, status: newStatus } : a))
+      prev.map((a) => {
+        if (a.id === actionId) {
+          actionTitle = a.title;
+          return { ...a, status: newStatus };
+        }
+        return a;
+      })
     );
     if (newStatus === 'In Progress') {
       showToast('Action moved to In Progress', 'info');
+      addActivity(`Action "${actionTitle}" moved to In Progress`);
     } else if (newStatus === 'Completed') {
       showToast('Action completed', 'success');
+      addActivity(`Action "${actionTitle}" completed`);
     } else {
       showToast(`Action status set to ${newStatus}`, 'info');
     }
@@ -161,8 +225,10 @@ export function WorkflowProvider({ children }) {
 
   // Reset to initial demo data
   const resetDemoData = () => {
+    setDocuments(INITIAL_DOCUMENTS);
     setConflicts(INITIAL_CONFLICTS);
     setActions(INITIAL_ACTIONS);
+    setRecentActivity(INITIAL_RECENT_ACTIVITY);
     showToast('Demo data reset to initial state', 'info');
   };
 
@@ -188,11 +254,15 @@ export function WorkflowProvider({ children }) {
   return (
     <WorkflowContext.Provider
       value={{
+        documents,
         conflicts,
         actions,
+        recentActivity,
         toasts,
         conflictMetrics,
         actionMetrics,
+        addDocument,
+        removeDocument,
         updateConflictStatus,
         markConflictResolved,
         createActionFromConflict,
