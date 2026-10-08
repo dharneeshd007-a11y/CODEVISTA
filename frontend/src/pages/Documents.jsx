@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Filter, FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, Filter, FileText, AlertTriangle, ArrowRight } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 import DocumentUpload from '../components/DocumentUpload';
 import DocumentTable from '../components/DocumentTable';
 import DocumentDetails from '../components/DocumentDetails';
 import EmptyState from '../components/EmptyState';
+import Button from '../components/Button';
 
 const DEMO_DOCUMENTS = [
   {
@@ -60,11 +62,44 @@ export default function Documents() {
       <div className="max-w-7xl mx-auto space-y-8 pb-12">
         
         {/* Header Section */}
-        <section className="text-center sm:text-left mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Documents</h2>
-          <p className="text-slate-400 text-lg">Bring your information together and discover what matters.</p>
-          <p className="text-brand-400 font-medium mt-2">Turn scattered information into clear, actionable insights.</p>
+        <section className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2">
+          <div>
+            <h2 className="text-3xl font-bold text-white mb-2">Documents</h2>
+            <p className="text-slate-400 text-lg">Bring your information together and discover what matters.</p>
+            <p className="text-brand-400 font-medium mt-1 text-sm">Turn scattered information into clear, actionable insights.</p>
+          </div>
+
+          <Link to="/conflicts">
+            <Button className="px-4 py-2.5 flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+              <AlertTriangle className="w-4 h-4 text-amber-200" />
+              <span>View Conflicts</span>
+            </Button>
+          </Link>
         </section>
+
+        {/* Phase 5 Conflict Alert Banner */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-amber-300">
+                Conflict Detected Across Documents
+              </h3>
+              <p className="text-xs text-slate-300 mt-1">
+                Conflicting submission dates were detected between <strong className="text-white">Project Proposal</strong> and <strong className="text-white">Project Requirements</strong>.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/conflicts"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-amber-950 bg-amber-400 hover:bg-amber-300 transition-colors flex items-center gap-1.5 shrink-0"
+          >
+            <span>Inspect Conflicts</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
 
         {/* Upload Section */}
         <section>
@@ -135,12 +170,11 @@ export default function Documents() {
             <DocumentTable 
               documents={filteredDocuments} 
               onView={setSelectedDoc}
-              onCompare={() => alert('Compare feature coming in next phase.')}
+              onCompare={() => window.location.href = '/compare'}
               onDelete={handleDelete}
             />
           )}
         </section>
-
       </div>
 
       {/* Document Details Modal */}

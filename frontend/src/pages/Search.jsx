@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { Search as SearchIcon, FileText, ArrowRight, Loader2, Sparkles, X } from 'lucide-react';
+import { Search as SearchIcon, FileText, ArrowRight, Loader2, Sparkles, X, AlertTriangle } from 'lucide-react';
 
 const SearchInput = ({ query, setQuery, onSearch }) => {
   return (
@@ -38,7 +38,6 @@ const SearchInput = ({ query, setQuery, onSearch }) => {
 };
 
 const SearchResult = ({ title, type, source, content, highlight }) => {
-  // Simple highlight logic
   const renderContent = () => {
     if (!highlight) return <p className="text-slate-300">{content}</p>;
     const parts = content.split(new RegExp(`(${highlight})`, 'gi'));
@@ -80,7 +79,7 @@ const SearchResult = ({ title, type, source, content, highlight }) => {
 
 export default function SmartSearch() {
   const [query, setQuery] = useState('');
-  const [state, setState] = useState('idle'); // idle, loading, results, no-results
+  const [state, setState] = useState('idle');
   const [results, setResults] = useState([]);
 
   const demoData = {
@@ -141,7 +140,6 @@ export default function SmartSearch() {
     
     setState('loading');
     
-    // Simulate AI thinking
     setTimeout(() => {
       const match = Object.keys(demoData).find(k => query.toLowerCase().includes(k.toLowerCase().replace('?', '')));
       if (match) {
@@ -154,7 +152,7 @@ export default function SmartSearch() {
         setResults([]);
         setState('no-results');
       }
-    }, 1500);
+    }, 1200);
   };
 
   const setDemoQuery = (q) => {
@@ -164,20 +162,40 @@ export default function SmartSearch() {
     setTimeout(() => {
       setResults(demoData[q] || []);
       setState(demoData[q] ? 'results' : 'no-results');
-    }, 1200);
+    }, 1000);
   };
+
+  const hasDeadlineConflict = query.toLowerCase().includes('deadline') && state === 'results';
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-white mb-3">Smart Search</h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Find important information across your documents. Don't search through every document. Find what matters.
-          </p>
+      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                <SearchIcon className="w-4 h-4" />
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-brand-400">
+                Workflow Step 1 • Smart Search
+              </span>
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-2">Smart Search</h2>
+            <p className="text-slate-400 text-lg">
+              Find important information across your documents. Don't search through every document. Find what matters.
+            </p>
+          </div>
+
+          <Link
+            to="/compare"
+            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-brand-300 hover:text-white bg-brand-500/10 hover:bg-brand-600/30 border border-brand-500/30 transition-all flex items-center gap-1.5 self-start md:self-auto"
+          >
+            <span>Compare Sources</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
-        <div className="mb-12">
+        <div>
           <SearchInput query={query} setQuery={setQuery} onSearch={handleSearch} />
           
           <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
@@ -193,6 +211,25 @@ export default function SmartSearch() {
             ))}
           </div>
         </div>
+
+        {/* Potential Conflict Banner when searching deadlines */}
+        {hasDeadlineConflict && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-fade-in">
+            <div className="flex items-center gap-2.5 text-amber-300">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+              <span>
+                <strong>Conflicting Deadlines Detected:</strong> Proposal specifies 20 Oct 2026, while Requirements specifies 25 Oct 2026.
+              </span>
+            </div>
+            <Link
+              to="/conflicts"
+              className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 shrink-0"
+            >
+              Inspect in Conflict Detection
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        )}
 
         {/* State Management */}
         <div className="transition-all duration-500 ease-in-out">

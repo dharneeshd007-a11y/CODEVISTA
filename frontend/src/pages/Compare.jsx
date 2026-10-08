@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { GitCompare, AlertTriangle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
+import Button from '../components/Button';
 
 const DocumentSelector = ({ label, selected, onSelect }) => {
   const docs = [
@@ -31,7 +32,7 @@ const DocumentSelector = ({ label, selected, onSelect }) => {
   );
 };
 
-const ComparisonPanel = ({ title, items, docName, isDiff }) => {
+const ComparisonPanel = ({ title, items, isDiff }) => {
   return (
     <div className="flex-1 bg-surface-card border border-surface-border rounded-2xl overflow-hidden">
       <div className="bg-surface-dark px-6 py-4 border-b border-surface-border">
@@ -57,10 +58,10 @@ const ComparisonPanel = ({ title, items, docName, isDiff }) => {
 };
 
 export default function Compare() {
-  const [docA, setDocA] = useState('none');
-  const [docB, setDocB] = useState('none');
+  const [docA, setDocA] = useState('doc-a');
+  const [docB, setDocB] = useState('doc-b');
   const [isComparing, setIsComparing] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  const [showResults, setShowResults] = useState(true);
 
   const canCompare = docA !== 'none' && docB !== 'none' && docA !== docB;
 
@@ -71,7 +72,7 @@ export default function Compare() {
     setTimeout(() => {
       setIsComparing(false);
       setShowResults(true);
-    }, 1500);
+    }, 1200);
   };
 
   const itemsA = [
@@ -86,16 +87,34 @@ export default function Compare() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-white mb-3">Compare Documents</h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Compare information from multiple sources and identify differences. Compare sources. Discover differences. Act with confidence.
-          </p>
+      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                <GitCompare className="w-4 h-4" />
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-brand-400">
+                Workflow Step 3 • Compare & Organize
+              </span>
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-2">Compare Documents</h2>
+            <p className="text-slate-400 text-lg">
+              Compare information from multiple sources and identify differences. Act with confidence.
+            </p>
+          </div>
+
+          <Link to="/conflicts">
+            <Button className="px-5 py-2.5 flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+              <AlertTriangle className="w-4 h-4 text-amber-200" />
+              <span>Review Detected Conflicts</span>
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
         </div>
 
         {/* Document Selection */}
-        <div className="bg-surface-card border border-surface-border rounded-3xl p-6 md:p-8 mb-8 shadow-xl">
+        <div className="bg-surface-card border border-surface-border rounded-3xl p-6 md:p-8 shadow-xl">
           <div className="flex flex-col md:flex-row items-end gap-6">
             <DocumentSelector label="Document A" selected={docA} onSelect={setDocA} />
             <div className="hidden md:flex pb-3 items-center justify-center w-12 h-12 bg-surface-dark rounded-full border border-surface-border text-slate-400 shrink-0">
@@ -207,9 +226,9 @@ export default function Compare() {
                   
                   <Link 
                     to="/conflicts"
-                    className="inline-flex items-center gap-2 bg-amber-500 text-amber-950 font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-400 transition-colors text-sm"
+                    className="inline-flex items-center gap-2 bg-amber-500 text-amber-950 font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-400 transition-colors text-sm shadow-md"
                   >
-                    Review Conflict <ArrowRight className="w-4 h-4" />
+                    Review in Conflict Detection <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>

@@ -1,8 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Compass, LayoutDashboard, FileText, Search, GitCompare, AlertCircle, CheckSquare, Settings, LogOut, Menu, X } from 'lucide-react';
+import { Compass, LayoutDashboard, FileText, Search, GitCompare, AlertCircle, CheckSquare, Settings, LogOut, X } from 'lucide-react';
+import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
+  const { conflictMetrics, actionMetrics } = useWorkflow();
+
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
     window.location.href = '/login';
@@ -13,8 +16,20 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
     { name: 'Documents', icon: FileText, path: '/documents' },
     { name: 'Smart Search', icon: Search, path: '/search' },
     { name: 'Compare', icon: GitCompare, path: '/compare' },
-    { name: 'Conflicts', icon: AlertCircle, path: '/conflicts' },
-    { name: 'Action Center', icon: CheckSquare, path: '/actions' },
+    {
+      name: 'Conflicts',
+      icon: AlertCircle,
+      path: '/conflicts',
+      badge: conflictMetrics.unresolvedCount > 0 ? conflictMetrics.unresolvedCount : null,
+      badgeColor: 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+    },
+    {
+      name: 'Action Center',
+      icon: CheckSquare,
+      path: '/actions',
+      badge: actionMetrics.activeCount > 0 ? actionMetrics.activeCount : null,
+      badgeColor: 'bg-brand-500/10 text-brand-400 border border-brand-500/20'
+    },
   ];
 
   return (
@@ -50,17 +65,22 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
               to={item.path}
               onClick={() => { if (window.innerWidth < 1024) toggleSidebar(); }}
               className={({ isActive }) => `
-                flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
+                flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group
                 ${isActive 
                   ? 'bg-brand-500/10 text-brand-400 font-medium' 
                   : 'text-slate-400 hover:text-slate-200 hover:bg-surface-card'
                 }
               `}
             >
-              <item.icon className={`w-5 h-5 transition-colors ${
-                window.location.pathname === item.path ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-300'
-              }`} />
-              {item.name}
+              <div className="flex items-center gap-3">
+                <item.icon className="w-5 h-5 transition-colors group-hover:text-slate-300" />
+                <span>{item.name}</span>
+              </div>
+              {item.badge !== null && item.badge !== undefined && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.badgeColor}`}>
+                  {item.badge}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
