@@ -351,6 +351,61 @@ export default function Dashboard() {
                 ))}
               </div>
             </section>
+
+            {/* Recent Insights */}
+            <section>
+              <div className="flex items-center justify-between mb-4 mt-8">
+                <h3 className="text-lg font-semibold text-white">Recent Insights</h3>
+              </div>
+              
+              <div className="space-y-4">
+                {/* Demo Insight 1 */}
+                <div className="glass-card rounded-xl p-5 border border-amber-500/30 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2 text-amber-400">
+                      <AlertTriangle className="w-5 h-5" />
+                      <h4 className="font-semibold text-white">Different deadlines found</h4>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 uppercase tracking-wider">
+                      Needs Verification
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400 mb-4">
+                    <span className="text-slate-300 font-medium">Source:</span> Project Proposal + Project Requirements
+                  </div>
+                  <Link to="/conflicts">
+                    <Button variant="secondary" className="w-full text-xs py-1.5">
+                      Review Conflict
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Demo Insight 2 */}
+                <div className="glass-card rounded-xl p-5 border border-surface-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-white flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-brand-400" />
+                      Important Information
+                    </h4>
+                  </div>
+                  <ul className="text-sm text-slate-300 space-y-2 mb-4">
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-400 mt-0.5">•</span>
+                      Submission deadline identified
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-400 mt-0.5">•</span>
+                      Project documentation requirement identified
+                    </li>
+                  </ul>
+                  <div className="text-xs text-slate-500 italic text-center">
+                    Demo Data
+                  </div>
+                </div>
+              </div>
+              </div>
+            </section>
           </div>
 
         </div>

@@ -1,8 +1,10 @@
 import React from 'react';
-import { X, Calendar, FileCheck, CheckSquare, Info, ShieldAlert, ArrowDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Calendar, FileCheck, CheckSquare, Info, ShieldAlert, ArrowDown, Lightbulb } from 'lucide-react';
 import Button from './Button';
 
 export default function DocumentDetails({ document, onClose }) {
+  const navigate = useNavigate();
   if (!document) return null;
 
   return (
@@ -146,9 +148,19 @@ export default function DocumentDetails({ document, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-surface-border bg-surface-card/50 flex justify-end">
-          <Button variant="secondary" onClick={onClose} className="max-w-[150px]">
+        <div className="p-4 border-t border-surface-border bg-surface-card/50 flex justify-end gap-3">
+          <Button variant="secondary" onClick={onClose} className="w-24">
             Close
+          </Button>
+          <Button 
+            onClick={() => {
+              onClose();
+              navigate('/insights', { state: { documentId: document.id } });
+            }} 
+            className="flex items-center gap-2"
+          >
+            <Lightbulb className="w-4 h-4" />
+            View Insights
           </Button>
         </div>
 
