@@ -52,6 +52,11 @@ export function WorkflowProvider({ children }) {
   const [conflicts, setConflicts] = useState(INITIAL_CONFLICTS);
   const [actions, setActions] = useState(INITIAL_ACTIONS);
   const [toasts, setToasts] = useState([]);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState({
+    documents: 2,
+    importantFindings: 2
+  });
 
   // Toast notification helper
   const showToast = (message, type = 'success') => {
@@ -163,7 +168,64 @@ export function WorkflowProvider({ children }) {
   const resetDemoData = () => {
     setConflicts(INITIAL_CONFLICTS);
     setActions(INITIAL_ACTIONS);
+    setIsDemoMode(false);
+    setDashboardStats({ documents: 2, importantFindings: 2 });
     showToast('Demo data reset to initial state', 'info');
+  };
+
+  const enableDemoMode = () => {
+    setIsDemoMode(true);
+    setDashboardStats({ documents: 24, importantFindings: 42 });
+    // Expand initial data for demo mode (3 conflicts, 8 action items)
+    setConflicts([
+      INITIAL_CONFLICTS[0],
+      {
+        id: 'conflict-budget-01',
+        title: 'Conflicting Budget Value',
+        status: 'Needs Verification',
+        priority: 'High',
+        description: 'Different budget amounts were found.',
+        sourceA: { documentName: 'Project Proposal', documentType: 'PDF Document', section: 'Budget Overview', deadline: '₹50,000', excerpt: 'Total requested budget is ₹50,000.' },
+        sourceB: { documentName: 'Meeting Report', documentType: 'DOCX Document', section: 'Financials', deadline: '₹60,000', excerpt: 'Budget revised to ₹60,000.' },
+        differenceHighlight: '₹10,000 discrepancy.',
+        whyItMatters: 'Budget must be accurate.',
+        recommendedAction: 'Verify correct budget.',
+        actionCreated: false,
+      },
+      {
+        id: 'conflict-team-01',
+        title: 'Conflicting Team Size',
+        status: 'Under Review',
+        priority: 'Medium',
+        description: 'Different team sizes found.',
+        sourceA: { documentName: 'Project Proposal', documentType: 'PDF Document', section: 'Team', deadline: '4 members', excerpt: 'Team consists of 4 members.' },
+        sourceB: { documentName: 'Requirements', documentType: 'DOCX Document', section: 'Staffing', deadline: '5 members', excerpt: 'Requires 5 members.' },
+        differenceHighlight: '1 member discrepancy.',
+        whyItMatters: 'Resource allocation.',
+        recommendedAction: 'Confirm team size.',
+        actionCreated: false,
+      }
+    ]);
+    
+    const demoActions = [INITIAL_ACTIONS[0]];
+    for (let i = 2; i <= 8; i++) {
+      demoActions.push({
+        id: `action-demo-${i}`,
+        title: i === 2 ? 'Review budget' : i === 3 ? 'Update requirements' : `Sample Action ${i}`,
+        source: 'Multiple Documents',
+        reason: 'Demo generated action',
+        priority: i % 2 === 0 ? 'Medium' : 'Low',
+        status: 'Pending',
+        due: 'Next week',
+        why: 'Required for project progression.',
+        relatedConflict: 'None',
+        relatedConflictId: null,
+        recommendedNextStep: 'Complete this task.',
+        createdAt: 'Just now'
+      });
+    }
+    setActions(demoActions);
+    showToast('Final Demo Mode Activated', 'success');
   };
 
   // Computed summary metrics
@@ -200,6 +262,9 @@ export function WorkflowProvider({ children }) {
         updateActionStatus,
         deleteAction,
         resetDemoData,
+        enableDemoMode,
+        isDemoMode,
+        dashboardStats,
         showToast,
         removeToast
       }}

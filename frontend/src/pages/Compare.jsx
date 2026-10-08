@@ -32,26 +32,42 @@ const DocumentSelector = ({ label, selected, onSelect }) => {
   );
 };
 
-const ComparisonPanel = ({ title, items, isDiff }) => {
+const ComparisonTable = ({ docA, docB, items }) => {
   return (
-    <div className="flex-1 bg-surface-card border border-surface-border rounded-2xl overflow-hidden">
-      <div className="bg-surface-dark px-6 py-4 border-b border-surface-border">
-        <h4 className="font-semibold text-slate-300 text-sm tracking-wider uppercase text-center">{title}</h4>
-      </div>
-      <div className="p-6 space-y-6">
-        {items.map((item, i) => (
-          <div key={i}>
-            <div className="text-xs text-slate-500 uppercase font-semibold mb-2">{item.label}</div>
-            <div className={`p-4 rounded-xl border ${isDiff && item.diff ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' : 'bg-surface-dark border-surface-border text-slate-300'}`}>
-              {item.value}
-              {item.extra && (
-                <div className="mt-2 pt-2 border-t border-amber-500/20 text-brand-300 font-medium">
-                  + {item.extra}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+    <div className="bg-surface-card border border-surface-border rounded-2xl overflow-hidden shadow-xl mt-8">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-surface-dark border-b border-surface-border">
+              <th className="py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Field</th>
+              <th className="py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">{docA}</th>
+              <th className="py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">{docB}</th>
+              <th className="py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-surface-border">
+            {items.map((item, i) => (
+              <tr key={i} className="hover:bg-surface-dark/30 transition-colors">
+                <td className="py-4 px-6 text-sm font-medium text-slate-200">{item.field}</td>
+                <td className="py-4 px-6 text-sm text-slate-300">{item.valA}</td>
+                <td className="py-4 px-6 text-sm text-slate-300">{item.valB}</td>
+                <td className="py-4 px-6">
+                  {item.status === 'Conflict' ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <AlertTriangle className="w-3 h-3" />
+                      Conflict
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Match
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -75,14 +91,11 @@ export default function Compare() {
     }, 1200);
   };
 
-  const itemsA = [
-    { label: 'Deadline', value: '20 October 2026', diff: true },
-    { label: 'Requirement', value: 'Submit project documentation', diff: false }
-  ];
-
-  const itemsB = [
-    { label: 'Deadline', value: '25 October 2026', diff: true },
-    { label: 'Requirement', value: 'Submit project documentation', extra: 'review checklist', diff: true }
+  const tableItems = [
+    { field: 'Deadline', valA: '20 October 2026', valB: '25 October 2026', status: 'Conflict' },
+    { field: 'Budget', valA: '₹50,000', valB: '₹50,000', status: 'Match' },
+    { field: 'Team Size', valA: '4', valB: '5', status: 'Conflict' },
+    { field: 'Requirement', valA: 'Submit project documentation', valB: 'Submit project documentation & review checklist', status: 'Conflict' }
   ];
 
   return (
@@ -234,19 +247,26 @@ export default function Compare() {
               </div>
             </div>
 
-            {/* Side by side comparison */}
-            <div className="flex flex-col md:flex-row gap-6 mt-8">
-              <ComparisonPanel 
-                title="Project Proposal" 
-                items={itemsA} 
-                isDiff={true} 
-              />
-              <ComparisonPanel 
-                title="Project Requirements" 
-                items={itemsB} 
-                isDiff={true} 
-              />
+            {/* Recommendation Block */}
+            <div className="bg-brand-500/10 border border-brand-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h4 className="text-lg font-bold text-white mb-1">Recommendation</h4>
+                <p className="text-slate-300 text-sm">Verify the latest information regarding Deadlines and Team Size before taking action.</p>
+              </div>
+              <Link to="/actions">
+                <Button className="whitespace-nowrap flex items-center gap-2">
+                  Create Action Item
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
             </div>
+
+            {/* Comparison Table */}
+            <ComparisonTable 
+              docA={docA === 'doc-a' ? 'Project Proposal' : 'Document A'} 
+              docB={docB === 'doc-b' ? 'Project Requirements' : 'Document B'} 
+              items={tableItems} 
+            />
           </div>
         )}
       </div>

@@ -9,7 +9,7 @@ import Button from '../components/Button';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Dashboard() {
-  const { conflictMetrics, actionMetrics, conflicts, actions } = useWorkflow();
+  const { conflictMetrics, actionMetrics, conflicts, actions, isDemoMode, enableDemoMode, dashboardStats } = useWorkflow();
 
   const activeConflict = conflicts[0];
   const activeAction = actions[0];
@@ -33,6 +33,11 @@ export default function Dashboard() {
             <p className="text-slate-400 text-lg mt-1">Turn scattered information into clear, actionable insights.</p>
           </div>
           <div className="flex items-center gap-3">
+            {!isDemoMode && (
+              <Button variant="secondary" onClick={enableDemoMode} className="w-full md:w-auto px-6 py-2.5">
+                Load Demo Data
+              </Button>
+            )}
             <Link to="/documents">
               <Button className="w-full md:w-auto px-6 py-2.5 flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -46,12 +51,12 @@ export default function Dashboard() {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <StatCard
             title="Total documents"
-            value="2"
+            value={dashboardStats.documents.toString()}
             icon={FileText}
           />
           <StatCard
             title="Important findings"
-            value="2"
+            value={dashboardStats.importantFindings.toString()}
             icon={Lightbulb}
           />
           <StatCard
@@ -142,6 +147,48 @@ export default function Dashboard() {
                   icon={AlertTriangle} 
                   path="/conflicts" 
                 />
+              </div>
+            </section>
+
+            {/* Intelligent Insights (Phase 7) */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-brand-400" /> Intelligent Insights
+                </h3>
+                <Link to="/insights" className="text-xs text-brand-400 hover:text-brand-300 font-medium">View All</Link>
+              </div>
+              <div className="space-y-3">
+                <div className="bg-surface-card border border-surface-border p-4 rounded-xl flex items-start gap-3">
+                  <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg shrink-0 mt-0.5">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-white text-sm">Conflicting information detected</h5>
+                    <p className="text-slate-400 text-xs mt-1">Found 3 discrepancies across Project Proposal and Requirements.</p>
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] uppercase font-bold tracking-wider rounded">High Priority</span>
+                  </div>
+                </div>
+                <div className="bg-surface-card border border-surface-border p-4 rounded-xl flex items-start gap-3">
+                  <div className="p-2 bg-rose-500/10 text-rose-400 rounded-lg shrink-0 mt-0.5">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-white text-sm">Important deadline approaching</h5>
+                    <p className="text-slate-400 text-xs mt-1">Phase 3 Demo is scheduled for 20 October 2026.</p>
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-rose-500/20 text-rose-400 text-[10px] uppercase font-bold tracking-wider rounded">High Priority</span>
+                  </div>
+                </div>
+                <div className="bg-surface-card border border-surface-border p-4 rounded-xl flex items-start gap-3">
+                  <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-white text-sm">Multiple documents mention the same requirement</h5>
+                    <p className="text-slate-400 text-xs mt-1">Both Proposal and Requirements specify "Submit project documentation".</p>
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] uppercase font-bold tracking-wider rounded">Low Priority</span>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -257,56 +304,100 @@ export default function Dashboard() {
               )}
             </section>
 
-            {/* Recent Insights */}
+            {/* Recent Documents */}
             <section>
-              <div className="flex items-center justify-between mb-4 mt-8">
-                <h3 className="text-lg font-semibold text-white">Recent Insights</h3>
-                <Link to="/insights" className="text-sm text-brand-400 hover:text-brand-300 font-medium">View all</Link>
-              </div>
-              
-              <div className="space-y-4">
-                {/* Demo Insight 1 */}
-                <div className="glass-card rounded-xl p-5 border border-amber-500/30 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2 text-amber-400">
-                      <AlertTriangle className="w-5 h-5" />
-                      <h4 className="font-semibold text-white">Different deadlines found</h4>
+              <div className="bg-surface-card border border-surface-border rounded-2xl p-6 mb-8 mt-8">
+                <h3 className="text-lg font-semibold text-white mb-4">Recent Documents</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-dark/50 border border-surface-border">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-4 h-4 text-brand-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">Project Proposal.pdf</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">Processed 2 mins ago</p>
+                      </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 uppercase tracking-wider">
-                      Needs Verification
-                    </span>
+                    <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">READY</span>
                   </div>
-                  <div className="text-xs text-slate-400 mb-4">
-                    <span className="text-slate-300 font-medium">Source:</span> Project Proposal + Project Requirements
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-dark/50 border border-surface-border">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-4 h-4 text-brand-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">Meeting Report.docx</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">Processed 5 mins ago</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">READY</span>
                   </div>
-                  <Link to="/conflicts">
-                    <Button variant="secondary" size="sm" className="w-full">
-                      Review Conflict
-                    </Button>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-dark/50 border border-surface-border">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-4 h-4 text-brand-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">Requirements.pdf</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">Processed 1 hour ago</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">READY</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Recent AI Questions */}
+            <section>
+              <div className="bg-surface-card border border-surface-border rounded-2xl p-6 mb-8">
+                <h3 className="text-lg font-semibold text-white mb-4">Recent AI Questions</h3>
+                <div className="space-y-3">
+                  <Link to="/search" className="block p-3 rounded-xl bg-surface-dark/50 border border-surface-border hover:border-brand-500/30 transition-colors">
+                    <p className="text-sm font-medium text-slate-200">"What are all the deadlines?"</p>
+                    <p className="text-xs text-brand-400 mt-1">Found 3 references</p>
+                  </Link>
+                  <Link to="/search" className="block p-3 rounded-xl bg-surface-dark/50 border border-surface-border hover:border-brand-500/30 transition-colors">
+                    <p className="text-sm font-medium text-slate-200">"Are there any conflicting values?"</p>
+                    <p className="text-xs text-amber-400 mt-1">Detected 2 conflicts</p>
+                  </Link>
+                  <Link to="/search" className="block p-3 rounded-xl bg-surface-dark/50 border border-surface-border hover:border-brand-500/30 transition-colors">
+                    <p className="text-sm font-medium text-slate-200">"What action items were identified?"</p>
+                    <p className="text-xs text-brand-400 mt-1">Found 3 action items</p>
                   </Link>
                 </div>
+              </div>
+            </section>
 
-                {/* Demo Insight 2 */}
-                <div className="glass-card rounded-xl p-5 border border-surface-border">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-white flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-brand-400" />
-                      Important Information
-                    </h4>
+            {/* Upcoming Deadlines */}
+            <section>
+              <div className="bg-surface-card border border-surface-border rounded-2xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Upcoming Deadlines</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-dark/50 border border-rose-500/30">
+                    <div className="p-2 bg-rose-500/10 text-rose-400 rounded-lg shrink-0">
+                      <span className="text-sm font-bold block leading-none">20</span>
+                      <span className="text-[10px] uppercase font-bold">OCT</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">Project Proposal Submission</p>
+                      <p className="text-xs text-slate-400">Project Proposal.pdf</p>
+                    </div>
                   </div>
-                  <ul className="text-sm text-slate-300 space-y-2 mb-4">
-                    <li className="flex items-start gap-2">
-                      <span className="text-brand-400 mt-0.5">•</span>
-                      Submission deadline identified
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-brand-400 mt-0.5">•</span>
-                      Project documentation requirement identified
-                    </li>
-                  </ul>
-                  <div className="text-xs text-slate-500 italic text-center">
-                    Demo Data
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-dark/50 border border-amber-500/30">
+                    <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg shrink-0">
+                      <span className="text-sm font-bold block leading-none">22</span>
+                      <span className="text-[10px] uppercase font-bold">OCT</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">Final Project Delivery</p>
+                      <p className="text-xs text-slate-400">Meeting Report.pdf</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-dark/50 border border-surface-border">
+                    <div className="p-2 bg-surface-card text-slate-400 rounded-lg shrink-0 border border-surface-border">
+                      <span className="text-sm font-bold block leading-none">25</span>
+                      <span className="text-[10px] uppercase font-bold">OCT</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">Technical Review</p>
+                      <p className="text-xs text-slate-400">Requirements.pdf</p>
+                    </div>
                   </div>
                 </div>
               </div>

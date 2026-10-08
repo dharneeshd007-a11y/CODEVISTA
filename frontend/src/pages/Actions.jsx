@@ -34,8 +34,8 @@ export default function Actions() {
       bg: 'bg-rose-500/10 border-rose-500/20'
     },
     {
-      title: 'In Progress',
-      value: actionMetrics.inProgress,
+      title: 'Total Actions',
+      value: actionMetrics.total,
       color: 'text-sky-400 group-hover:text-sky-300',
       bg: 'bg-sky-500/10 border-sky-500/20'
     },

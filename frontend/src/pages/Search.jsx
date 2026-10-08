@@ -83,56 +83,43 @@ export default function SmartSearch() {
   const [results, setResults] = useState([]);
 
   const demoData = {
-    "What are the deadlines?": [
-      {
-        title: "Project Proposal",
-        type: "Deadline",
-        source: "Project Proposal",
-        content: "The final submission deadline for the proposal is 20 October 2026.",
-        highlight: "20 October 2026"
-      },
-      {
-        title: "Project Requirements",
-        type: "Deadline",
-        source: "Project Requirements",
-        content: "All technical requirements must be reviewed by 25 October 2026.",
-        highlight: "25 October 2026"
-      }
-    ],
-    "What are the project requirements?": [
-      {
-        title: "Project Requirements",
-        type: "Requirement",
-        source: "Project Requirements",
-        content: "Submit project documentation and review checklist before proceeding to Phase 5.",
-        highlight: "Submit project documentation and review checklist"
-      },
-      {
-        title: "Project Proposal",
-        type: "Requirement",
-        source: "Project Proposal",
-        content: "Teams must submit project documentation outlining the architecture.",
-        highlight: "Submit project documentation"
-      }
-    ],
-    "What actions are required?": [
-      {
-        title: "Action Item",
-        type: "Task",
-        source: "Project Requirements",
-        content: "Review checklist must be completed by the lead engineer.",
-        highlight: "Review checklist"
-      }
-    ],
-    "What information is missing?": [
-      {
-        title: "Missing Information",
-        type: "Flag",
-        source: "System Analysis",
-        content: "No budget allocation has been specified in the Project Proposal.",
-        highlight: "No budget allocation"
-      }
-    ]
+    "What are all the deadlines?": {
+      answer: "I found 3 deadline references across your documents.\n\n• Project Proposal.pdf — 20 October 2026\n• Meeting Report.pdf — 22 October 2026\n• Requirements.pdf — 20 October 2026",
+      conflict: "The Meeting Report contains a different deadline.",
+      results: [
+        { title: "Project Proposal", type: "Deadline", source: "Project Proposal.pdf", content: "The final submission deadline for the proposal is 20 October 2026.", highlight: "20 October 2026" },
+        { title: "Meeting Report", type: "Deadline", source: "Meeting Report.pdf", content: "Action item: Deliver final project by 22 October 2026.", highlight: "22 October 2026" },
+        { title: "Requirements", type: "Deadline", source: "Requirements.pdf", content: "Contractual requirements mandate submission by 20 October 2026.", highlight: "20 October 2026" }
+      ]
+    },
+    "What are the important requirements?": {
+      answer: "I found 2 important requirement sections across your documents.\n\n• Submit project documentation and review checklist\n• Teams must submit project documentation outlining the architecture",
+      results: [
+        { title: "Project Requirements", type: "Requirement", source: "Project Requirements.pdf", content: "Submit project documentation and review checklist before proceeding to Phase 5.", highlight: "Submit project documentation and review checklist" },
+        { title: "Project Proposal", type: "Requirement", source: "Project Proposal.pdf", content: "Teams must submit project documentation outlining the architecture.", highlight: "Submit project documentation" }
+      ]
+    },
+    "Are there any conflicting values?": {
+      answer: "Yes, I detected 2 conflicting values across your documents.\n\n1. Deadline conflict: 20 October 2026 vs 22 October 2026.\n2. Budget conflict: ₹50,000 vs ₹60,000.",
+      conflict: "Multiple conflicts detected in critical project parameters.",
+      results: [
+        { title: "Project Proposal", type: "Conflict", source: "Project Proposal.pdf", content: "Deadline: 20 October 2026. Budget: ₹50,000.", highlight: "20 October 2026" },
+        { title: "Meeting Report", type: "Conflict", source: "Meeting Report.pdf", content: "Revised deadline: 22 October 2026. Budget revised to ₹60,000.", highlight: "22 October 2026" }
+      ]
+    },
+    "What action items were identified?": {
+      answer: "I found 3 action items assigned to your team.\n\n• Verify final submission deadline (High Priority)\n• Review budget allocation (Medium Priority)\n• Update project requirements (Medium Priority)",
+      results: [
+        { title: "Action Item", type: "Task", source: "Meeting Report.pdf", content: "Action Item: Verify final submission deadline before the end of the week.", highlight: "Verify final submission deadline" },
+        { title: "Action Item", type: "Task", source: "Project Requirements.pdf", content: "Action Item: Review budget allocation and update project requirements.", highlight: "Review budget allocation" }
+      ]
+    },
+    "What information is missing?": {
+      answer: "I found 1 piece of missing critical information.\n\n• No budget allocation has been specified in the Project Proposal.",
+      results: [
+        { title: "Missing Information", type: "Flag", source: "System Analysis", content: "No budget allocation has been specified in the Project Proposal.", highlight: "No budget allocation" }
+      ]
+    }
   };
 
   const handleSearch = () => {
@@ -141,15 +128,14 @@ export default function SmartSearch() {
     setState('loading');
     
     setTimeout(() => {
-      const match = Object.keys(demoData).find(k => query.toLowerCase().includes(k.toLowerCase().replace('?', '')));
+      const matchKey = Object.keys(demoData).find(k => query.toLowerCase().includes(k.toLowerCase().replace('?', '').split(' ')[0]));
+      const match = demoData[query] || demoData[matchKey];
+      
       if (match) {
-        setResults(demoData[match]);
-        setState('results');
-      } else if (demoData[query]) {
-        setResults(demoData[query]);
+        setResults(match);
         setState('results');
       } else {
-        setResults([]);
+        setResults(null);
         setState('no-results');
       }
     }, 1200);
@@ -157,15 +143,14 @@ export default function SmartSearch() {
 
   const setDemoQuery = (q) => {
     setQuery(q);
-    
     setState('loading');
     setTimeout(() => {
-      setResults(demoData[q] || []);
+      setResults(demoData[q] || null);
       setState(demoData[q] ? 'results' : 'no-results');
     }, 1000);
   };
 
-  const hasDeadlineConflict = query.toLowerCase().includes('deadline') && state === 'results';
+  const hasDeadlineConflict = results?.conflict && state === 'results';
 
   return (
     <DashboardLayout>
@@ -212,13 +197,13 @@ export default function SmartSearch() {
           </div>
         </div>
 
-        {/* Potential Conflict Banner when searching deadlines */}
+        {/* Potential Conflict Banner from AI Answer */}
         {hasDeadlineConflict && (
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-fade-in">
             <div className="flex items-center gap-2.5 text-amber-300">
               <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
               <span>
-                <strong>Conflicting Deadlines Detected:</strong> Proposal specifies 20 Oct 2026, while Requirements specifies 25 Oct 2026.
+                <strong>⚠️ Conflict detected:</strong> {results.conflict}
               </span>
             </div>
             <Link
@@ -255,12 +240,45 @@ export default function SmartSearch() {
             </div>
           )}
 
-          {state === 'results' && (
+          {state === 'results' && results && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center justify-between pb-4 border-b border-surface-border">
+              
+              {/* AI Conversational Answer */}
+              <div className="bg-brand-500/10 border border-brand-500/20 rounded-3xl p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <Sparkles className="w-6 h-6 text-brand-400" />
+                  <h3 className="text-xl font-bold text-white">AI Answer</h3>
+                </div>
+                <div className="text-slate-200 text-lg whitespace-pre-wrap leading-relaxed">
+                  {results.answer}
+                </div>
+                {results.conflict && (
+                  <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                    <div className="flex items-start gap-2 text-amber-400">
+                      <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="block mb-1">Conflict detected:</strong>
+                        <span className="text-amber-200/80">{results.conflict}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="mt-6 pt-6 border-t border-brand-500/20">
+                  <h4 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">Sources Consulted</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(new Set(results.results.map(r => r.source))).map((src, i) => (
+                      <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-dark border border-surface-border rounded-lg text-sm text-slate-300">
+                        <FileText className="w-3.5 h-3.5 text-brand-400" />
+                        {src}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pb-4 mt-12 border-b border-surface-border">
                 <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-brand-400" /> 
-                  Relevant Information
+                  Extracted Information Segments
                 </h3>
                 <span className="text-xs font-semibold tracking-wider uppercase bg-brand-500/10 text-brand-400 px-3 py-1 rounded-full border border-brand-500/20">
                   DEMO RESULTS
@@ -268,7 +286,7 @@ export default function SmartSearch() {
               </div>
               
               <div className="grid gap-4">
-                {results.map((res, i) => (
+                {results.results.map((res, i) => (
                   <SearchResult key={i} {...res} />
                 ))}
               </div>

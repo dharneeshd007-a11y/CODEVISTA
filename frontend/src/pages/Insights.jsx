@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { 
   Lightbulb, ShieldAlert, Calendar, FileCheck, CheckSquare, 
-  Info, AlertTriangle, ArrowRight, BookOpen, Search, GitCompare,
+  Info, ArrowRight, BookOpen, Search, GitCompare,
   FileText
 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
@@ -92,7 +92,6 @@ const INSIGHTS_DATA = {
 
 export default function Insights() {
   const location = useLocation();
-  const navigate = useNavigate();
   
   // Check if a document ID was passed via state (e.g. from DocumentDetails)
   const initialDocId = location.state?.documentId || '';
@@ -126,7 +125,7 @@ export default function Insights() {
       
       return () => clearInterval(interval);
     }
-  }, [selectedDocId]);
+  }, [selectedDocId, loadingSteps.length]);
 
   const handleDocSelect = (e) => {
     setSelectedDocId(e.target.value);
