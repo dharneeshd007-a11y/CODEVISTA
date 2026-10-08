@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Compass, LayoutDashboard, FileText, Search, GitCompare, AlertCircle, CheckSquare, Settings, LogOut, X } from 'lucide-react';
+import { Compass, LayoutDashboard, FileText, Search, GitCompare, AlertCircle, CheckSquare, Settings, LogOut, Menu, X, Lightbulb } from 'lucide-react';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
@@ -14,6 +14,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
   const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Documents', icon: FileText, path: '/documents' },
+    { name: 'AI Insights', icon: Lightbulb, path: '/insights' },
     { name: 'Smart Search', icon: Search, path: '/search' },
     { name: 'Compare', icon: GitCompare, path: '/compare' },
     {
