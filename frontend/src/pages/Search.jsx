@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { Search as SearchIcon, FileText, ArrowRight, Loader2, Sparkles, X, AlertTriangle } from 'lucide-react';
+import { useWorkflow } from '../context/WorkflowContext';
 
 const SearchInput = ({ query, setQuery, onSearch }) => {
   return (
@@ -81,6 +82,7 @@ export default function SmartSearch() {
   const [query, setQuery] = useState('');
   const [state, setState] = useState('idle');
   const [results, setResults] = useState([]);
+  const { isDemoMode, BACKEND_URL } = useWorkflow();
 
   const demoData = {
     "What are all the deadlines?": {
@@ -122,23 +124,40 @@ export default function SmartSearch() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!query.trim()) return;
     
     setState('loading');
     
-    setTimeout(() => {
-      const matchKey = Object.keys(demoData).find(k => query.toLowerCase().includes(k.toLowerCase().replace('?', '').split(' ')[0]));
-      const match = demoData[query] || demoData[matchKey];
-      
-      if (match) {
-        setResults(match);
+    if (isDemoMode) {
+      setTimeout(() => {
+        const matchKey = Object.keys(demoData).find(k => query.toLowerCase().includes(k.toLowerCase().replace('?', '').split(' ')[0]));
+        const match = demoData[query] || demoData[matchKey];
+        
+        if (match) {
+          setResults(match);
+          setState('results');
+        } else {
+          setResults(null);
+          setState('no-results');
+        }
+      }, 1200);
+    } else {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+        setResults({ answer: data.answer, results: [] });
         setState('results');
-      } else {
+      } catch {
         setResults(null);
         setState('no-results');
       }
-    }, 1200);
+    }
   };
 
   const setDemoQuery = (q) => {
@@ -280,9 +299,9 @@ export default function SmartSearch() {
                 <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                   Extracted Information Segments
                 </h3>
-                <span className="text-xs font-semibold tracking-wider uppercase bg-brand-500/10 text-brand-400 px-3 py-1 rounded-full border border-brand-500/20">
+                {isDemoMode && <span className="text-xs font-semibold tracking-wider uppercase bg-brand-500/10 text-brand-400 px-3 py-1 rounded-full border border-brand-500/20">
                   DEMO RESULTS
-                </span>
+                </span>}
               </div>
               
               <div className="grid gap-4">

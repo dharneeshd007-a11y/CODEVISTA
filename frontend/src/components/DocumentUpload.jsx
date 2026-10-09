@@ -47,7 +47,8 @@ export default function DocumentUpload({ onUploadComplete }) {
       setSelectedFile({
         name: file.name,
         type: ext.toUpperCase(),
-        size: (file.size / 1024 / 1024).toFixed(2) + ' MB'
+        size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+        actualFile: file
       });
     } else {
       alert("Please select a PDF, DOCX, TXT, or CSV file.");
@@ -68,18 +69,16 @@ export default function DocumentUpload({ onUploadComplete }) {
         setProcessStep(currentStep);
       } else {
         clearInterval(interval);
-        setTimeout(() => {
-          setIsProcessing(false);
-          setSelectedFile(null);
-          setProcessStep(0);
-          onUploadComplete({
-            id: Date.now(),
-            name: selectedFile.name,
-            type: selectedFile.type,
-            status: 'Processed',
-            lastUpdated: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-            isDemo: false
-          });
+        setTimeout(async () => {
+          try {
+            await onUploadComplete(selectedFile.actualFile);
+            setIsProcessing(false);
+            setSelectedFile(null);
+            setProcessStep(0);
+          } catch (e) {
+            setIsProcessing(false);
+            setProcessStep(0);
+          }
         }, 800);
       }
     }, 1200);
@@ -176,7 +175,7 @@ export default function DocumentUpload({ onUploadComplete }) {
             />
           </div>
           <p className="text-xs text-brand-300 mt-4 font-medium animate-pulse">
-            Frontend demonstration (No real AI processing)
+            Processing real document...
           </p>
         </div>
       )}

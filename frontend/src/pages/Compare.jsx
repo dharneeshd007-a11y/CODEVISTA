@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { GitCompare, AlertTriangle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 import Button from '../components/Button';
+import { useWorkflow } from '../context/WorkflowContext';
 
-const DocumentSelector = ({ label, selected, onSelect }) => {
+const DocumentSelector = ({ label, selected, onSelect, availableDocs }) => {
   const docs = [
     { id: 'none', name: 'Select a document...' },
-    { id: 'doc-a', name: 'Project Proposal' },
-    { id: 'doc-b', name: 'Project Requirements' },
+    ...availableDocs
   ];
 
   return (
@@ -74,29 +74,57 @@ const ComparisonTable = ({ docA, docB, items }) => {
 };
 
 export default function Compare() {
-  const [docA, setDocA] = useState('doc-a');
-  const [docB, setDocB] = useState('doc-b');
+  const { documents, isDemoMode, BACKEND_URL } = useWorkflow();
+  const [docA, setDocA] = useState('none');
+  const [docB, setDocB] = useState('none');
   const [isComparing, setIsComparing] = useState(false);
-  const [showResults, setShowResults] = useState(true);
+  const [showResults, setShowResults] = useState(false);
+  const [resultsData, setResultsData] = useState(null);
 
   const canCompare = docA !== 'none' && docB !== 'none' && docA !== docB;
 
-  const handleCompare = () => {
+  const handleCompare = async () => {
     if (!canCompare) return;
     setIsComparing(true);
     setShowResults(false);
-    setTimeout(() => {
-      setIsComparing(false);
-      setShowResults(true);
-    }, 1200);
+    
+    if (isDemoMode) {
+      setTimeout(() => {
+        setResultsData({
+          summary: 'Comparison of demo documents completed.',
+          matchCount: 1,
+          conflictCount: 2,
+          conflicts: [
+            { title: 'Conflict Detected', description: 'Different deadlines were found across the selected documents.', valA: '20 October 2026', valB: '25 October 2026' }
+          ],
+          tableItems: [
+            { field: 'Deadline', valA: '20 October 2026', valB: '25 October 2026', status: 'Conflict' },
+            { field: 'Budget', valA: '₹50,000', valB: '₹50,000', status: 'Match' },
+            { field: 'Team Size', valA: '4', valB: '5', status: 'Conflict' },
+            { field: 'Requirement', valA: 'Submit project documentation', valB: 'Submit project documentation & review checklist', status: 'Conflict' }
+          ]
+        });
+        setIsComparing(false);
+        setShowResults(true);
+      }, 1200);
+    } else {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/compare`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ doc1Id: docA, doc2Id: docB })
+        });
+        if (!res.ok) throw new Error('Failed to compare');
+        const data = await res.json();
+        setResultsData(data.comparison);
+        setShowResults(true);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsComparing(false);
+      }
+    }
   };
-
-  const tableItems = [
-    { field: 'Deadline', valA: '20 October 2026', valB: '25 October 2026', status: 'Conflict' },
-    { field: 'Budget', valA: '₹50,000', valB: '₹50,000', status: 'Match' },
-    { field: 'Team Size', valA: '4', valB: '5', status: 'Conflict' },
-    { field: 'Requirement', valA: 'Submit project documentation', valB: 'Submit project documentation & review checklist', status: 'Conflict' }
-  ];
 
   return (
     <DashboardLayout>
@@ -129,11 +157,11 @@ export default function Compare() {
         {/* Document Selection */}
         <div className="bg-surface-card border border-surface-border rounded-3xl p-6 md:p-8 shadow-xl">
           <div className="flex flex-col md:flex-row items-end gap-6">
-            <DocumentSelector label="Document A" selected={docA} onSelect={setDocA} />
+            <DocumentSelector label="Document A" selected={docA} onSelect={setDocA} availableDocs={documents} />
             <div className="hidden md:flex pb-3 items-center justify-center w-12 h-12 bg-surface-dark rounded-full border border-surface-border text-slate-400 shrink-0">
               VS
             </div>
-            <DocumentSelector label="Document B" selected={docB} onSelect={setDocB} />
+            <DocumentSelector label="Document B" selected={docB} onSelect={setDocB} availableDocs={documents} />
             <button
               onClick={handleCompare}
               disabled={!canCompare || isComparing}
@@ -183,13 +211,13 @@ export default function Compare() {
               <div className="bg-surface-card border border-surface-border p-5 rounded-2xl">
                 <div className="text-slate-400 text-sm mb-1">Matching Items</div>
                 <div className="text-2xl font-bold text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" /> 1
+                  <CheckCircle2 className="w-5 h-5" /> {resultsData?.matchCount || 0}
                 </div>
               </div>
               <div className="bg-surface-card border border-surface-border p-5 rounded-2xl">
                 <div className="text-slate-400 text-sm mb-1">Differences</div>
                 <div className="text-2xl font-bold text-amber-400 flex items-center gap-2">
-                  <GitCompare className="w-5 h-5" /> 2
+                  <GitCompare className="w-5 h-5" /> {resultsData?.tableItems?.filter(i => i.status === 'Conflict').length || 0}
                 </div>
               </div>
               <div className="bg-surface-card border border-amber-500/30 p-5 rounded-2xl relative overflow-hidden">
@@ -197,7 +225,7 @@ export default function Compare() {
                 <div className="relative">
                   <div className="text-amber-200/80 text-sm mb-1">Potential Conflicts</div>
                   <div className="text-2xl font-bold text-amber-400 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" /> 1
+                    <AlertTriangle className="w-5 h-5" /> {resultsData?.conflictCount || 0}
                   </div>
                 </div>
               </div>
@@ -210,42 +238,37 @@ export default function Compare() {
             </div>
 
             {/* Conflict Preview */}
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 shadow-lg">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400">
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-amber-300 flex items-center gap-2 mb-2">
-                    Conflict Detected
-                    <span className="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-500/30">
-                      Needs Verification
-                    </span>
-                  </h4>
-                  <p className="text-amber-200/80 mb-6 text-sm">
-                    Different deadlines were found across the selected documents.
-                  </p>
-                  
-                  <div className="grid md:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-surface-dark/50 border border-amber-500/20 rounded-xl p-4">
-                      <div className="text-xs text-amber-500/70 font-semibold uppercase mb-1">Project Proposal</div>
-                      <div className="text-amber-100 font-medium">20 October 2026</div>
-                    </div>
-                    <div className="bg-surface-dark/50 border border-amber-500/20 rounded-xl p-4">
-                      <div className="text-xs text-amber-500/70 font-semibold uppercase mb-1">Project Requirements</div>
-                      <div className="text-amber-100 font-medium">25 October 2026</div>
+            {resultsData?.conflicts?.length > 0 && resultsData.conflicts.map((conflict, idx) => (
+              <div key={idx} className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 shadow-lg mb-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400">
+                    <AlertTriangle className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-amber-300 flex items-center gap-2 mb-2">
+                      {conflict.title}
+                      <span className="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-500/30">
+                        Needs Verification
+                      </span>
+                    </h4>
+                    <p className="text-amber-200/80 mb-6 text-sm">
+                      {conflict.description}
+                    </p>
+                    
+                    <div className="grid md:grid-cols-2 gap-4 mb-6">
+                      <div className="bg-surface-dark/50 border border-amber-500/20 rounded-xl p-4">
+                        <div className="text-xs text-amber-500/70 font-semibold uppercase mb-1">Document A</div>
+                        <div className="text-amber-100 font-medium">{conflict.valA}</div>
+                      </div>
+                      <div className="bg-surface-dark/50 border border-amber-500/20 rounded-xl p-4">
+                        <div className="text-xs text-amber-500/70 font-semibold uppercase mb-1">Document B</div>
+                        <div className="text-amber-100 font-medium">{conflict.valB}</div>
+                      </div>
                     </div>
                   </div>
-                  
-                  <Link 
-                    to="/conflicts"
-                    className="inline-flex items-center gap-2 bg-amber-500 text-amber-950 font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-400 transition-colors text-sm shadow-md"
-                  >
-                    Review in Conflict Detection <ArrowRight className="w-4 h-4" />
-                  </Link>
                 </div>
               </div>
-            </div>
+            ))}
 
             {/* Recommendation Block */}
             <div className="bg-brand-500/10 border border-brand-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -262,11 +285,13 @@ export default function Compare() {
             </div>
 
             {/* Comparison Table */}
-            <ComparisonTable 
-              docA={docA === 'doc-a' ? 'Project Proposal' : 'Document A'} 
-              docB={docB === 'doc-b' ? 'Project Requirements' : 'Document B'} 
-              items={tableItems} 
-            />
+            {resultsData?.tableItems && (
+              <ComparisonTable 
+                docA={documents.find(d => d.id === docA)?.name || 'Document A'} 
+                docB={documents.find(d => d.id === docB)?.name || 'Document B'} 
+                items={resultsData.tableItems} 
+              />
+            )}
           </div>
         )}
       </div>

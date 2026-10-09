@@ -1,49 +1,16 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const WorkflowContext = createContext(null);
 
+const BACKEND_URL = 'http://localhost:3001';
+
 const INITIAL_DOCUMENTS = [
-  {
-    id: 'demo-1',
-    name: 'Project Proposal',
-    type: 'PDF',
-    status: 'Processed',
-    lastUpdated: '10 Oct 2026',
-    isDemo: true
-  },
-  {
-    id: 'demo-2',
-    name: 'Project Requirements',
-    type: 'DOCX',
-    status: 'Processed',
-    lastUpdated: '12 Oct 2026',
-    isDemo: true
-  },
-  {
-    id: 'demo-3',
-    name: 'Meeting Report',
-    type: 'PDF',
-    status: 'Processed',
-    lastUpdated: '15 Oct 2026',
-    isDemo: true
-  },
-  {
-    id: 'demo-4',
-    name: 'Budget Report',
-    type: 'XLSX',
-    status: 'Processed',
-    lastUpdated: '16 Oct 2026',
-    isDemo: true
-  },
-  {
-    id: 'demo-5',
-    name: 'Client Requirements',
-    type: 'DOCX',
-    status: 'Processed',
-    lastUpdated: '18 Oct 2026',
-    isDemo: true
-  }
+  { id: 'demo-1', name: 'Project Proposal', type: 'PDF', status: 'Processed', lastUpdated: '10 Oct 2026', isDemo: true },
+  { id: 'demo-2', name: 'Project Requirements', type: 'DOCX', status: 'Processed', lastUpdated: '12 Oct 2026', isDemo: true },
+  { id: 'demo-3', name: 'Meeting Report', type: 'PDF', status: 'Processed', lastUpdated: '15 Oct 2026', isDemo: true },
+  { id: 'demo-4', name: 'Budget Report', type: 'XLSX', status: 'Processed', lastUpdated: '16 Oct 2026', isDemo: true },
+  { id: 'demo-5', name: 'Client Requirements', type: 'DOCX', status: 'Processed', lastUpdated: '18 Oct 2026', isDemo: true }
 ];
 
 const INITIAL_RECENT_ACTIVITY = [
@@ -55,25 +22,13 @@ const INITIAL_CONFLICTS = [
   {
     id: 'conflict-deadline-01',
     title: 'Conflicting Deadline',
-    status: 'Needs Verification', // 'Needs Verification' | 'Under Review' | 'Resolved'
+    status: 'Needs Verification',
     priority: 'High',
     description: 'Different deadlines were found across two documents.',
-    sourceA: {
-      documentName: 'Project Proposal',
-      documentType: 'PDF Document',
-      section: 'Section 4.2 - Submission Timeline',
-      deadline: '20 October 2026',
-      excerpt: 'The final project proposal deliverables must be submitted on or before 20 October 2026 for review committee evaluation.'
-    },
-    sourceB: {
-      documentName: 'Project Requirements',
-      documentType: 'DOCX Document',
-      section: 'Section 1.3 - Critical Milestones',
-      deadline: '25 October 2026',
-      excerpt: 'Contractual requirements mandate submission of complete project documentation by 25 October 2026 at 17:00 EST.'
-    },
+    sourceA: { documentName: 'Project Proposal', documentType: 'PDF Document', section: 'Section 4.2 - Submission Timeline', deadline: '20 October 2026', excerpt: 'The final project proposal deliverables must be submitted on or before 20 October 2026 for review committee evaluation.' },
+    sourceB: { documentName: 'Project Requirements', documentType: 'DOCX Document', section: 'Section 1.3 - Critical Milestones', deadline: '25 October 2026', excerpt: 'Contractual requirements mandate submission of complete project documentation by 25 October 2026 at 17:00 EST.' },
     differenceHighlight: '5-day discrepancy between Proposal (20 Oct 2026) and Requirements (25 Oct 2026).',
-    whyItMatters: 'Using the wrong deadline could result in a missed submission. The user should verify the correct deadline before taking action.',
+    whyItMatters: 'Using the wrong deadline could result in a missed submission.',
     recommendedAction: 'Verify the final submission deadline with the responsible source.',
     actionCreated: true,
   }
@@ -86,7 +41,7 @@ const INITIAL_ACTIONS = [
     source: 'Project Proposal + Project Requirements',
     reason: 'Conflicting deadlines were detected.',
     priority: 'High',
-    status: 'Pending', // 'Pending' | 'In Progress' | 'Completed'
+    status: 'Pending',
     due: 'Before final submission',
     why: 'Two documents contain different deadlines.',
     relatedConflict: 'Project Proposal vs Project Requirements',
@@ -97,22 +52,63 @@ const INITIAL_ACTIONS = [
 ];
 
 export function WorkflowProvider({ children }) {
-  const [documents, setDocuments] = useState(INITIAL_DOCUMENTS);
-  const [conflicts, setConflicts] = useState(INITIAL_CONFLICTS);
-  const [actions, setActions] = useState(INITIAL_ACTIONS);
+  const [documents, setDocuments] = useState([]);
+  const [conflicts, setConflicts] = useState([]);
+  const [actions, setActions] = useState([]);
   const [recentActivity, setRecentActivity] = useState(INITIAL_RECENT_ACTIVITY);
   const [toasts, setToasts] = useState([]);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [aiConfigured, setAiConfigured] = useState(false);
+
   const [dashboardStats, setDashboardStats] = useState({
-    documents: 2,
-    importantFindings: 2
+    documents: 0,
+    importantFindings: 0
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (isDemoMode) return;
+      try {
+        const [docsRes, confRes, actRes, aiRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/api/documents`),
+          fetch(`${BACKEND_URL}/api/conflicts`),
+          fetch(`${BACKEND_URL}/api/actions`),
+          fetch(`${BACKEND_URL}/api/status`)
+        ]);
+        const [docsData, confData, actData, aiData] = await Promise.all([
+          docsRes.json(),
+          confRes.json(),
+          actRes.json(),
+          aiRes.json()
+        ]);
+        setDocuments(docsData || []);
+        setConflicts(confData || []);
+        setActions(actData || []);
+        setAiConfigured(aiData.aiConfigured);
+        setDashboardStats({
+          documents: docsData?.length || 0,
+          importantFindings: (confData?.length || 0) + (actData?.length || 0)
+        });
+      } catch (e) {
+        setIsDemoMode(true);
+      }
+    };
+    fetchData();
+  }, [BACKEND_URL, isDemoMode]);
+
+  useEffect(() => {
+    if (isDemoMode) {
+      setDocuments(INITIAL_DOCUMENTS);
+      setConflicts(INITIAL_CONFLICTS);
+      setActions(INITIAL_ACTIONS);
+      setDashboardStats({ documents: INITIAL_DOCUMENTS.length, importantFindings: INITIAL_CONFLICTS.length });
+    }
+  }, [isDemoMode]);
 
   const addActivity = (message) => {
     setRecentActivity(prev => [{ id: `act-${Date.now()}`, message, timestamp: 'Just now' }, ...prev]);
   };
 
-  // Toast notification helper
   const showToast = (message, type = 'success') => {
     const id = Date.now() + Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -121,82 +117,111 @@ export function WorkflowProvider({ children }) {
     }, 3500);
   };
 
-  const removeToast = (id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+  const removeToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
+
+  const addDocument = async (file) => {
+    if (isDemoMode) {
+      const newDoc = {
+        id: `demo-${Date.now()}`,
+        name: file.name,
+        type: file.name.split('.').pop().toUpperCase(),
+        status: 'Processed',
+        lastUpdated: new Date().toLocaleDateString(),
+        isDemo: true
+      };
+      setDocuments([newDoc, ...documents]);
+      showToast('Document processed (Demo)', 'success');
+      return newDoc;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      showToast('Uploading document...', 'info');
+      const res = await fetch(`${BACKEND_URL}/api/documents`, { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Upload failed');
+      const newDoc = await res.json();
+      setDocuments(prev => [newDoc, ...prev]);
+      addActivity(`Document "${newDoc.name}" was added`);
+      showToast('Document uploaded successfully', 'success');
+      return newDoc;
+    } catch (e) {
+      showToast('Failed to upload document', 'error');
+      throw e;
+    }
   };
 
-  // Document Management
-  const addDocument = (doc) => {
-    setDocuments((prev) => [doc, ...prev]);
-    addActivity(`Document "${doc.name}" was added`);
-    showToast(`Document "${doc.name}" processed successfully`, 'success');
-  };
-
-  const removeDocument = (id) => {
+  const removeDocument = async (id) => {
+    if (!isDemoMode) {
+      await fetch(`${BACKEND_URL}/api/documents/${id}`, { method: 'DELETE' });
+    }
     const doc = documents.find(d => d.id === id);
     setDocuments((prev) => prev.filter((d) => d.id !== id));
     if (doc) addActivity(`Document "${doc.name}" was deleted`);
     showToast('Document deleted', 'info');
   };
 
-  // Conflict state management
-  const updateConflictStatus = (conflictId, newStatus) => {
-    setConflicts((prev) =>
-      prev.map((c) => (c.id === conflictId ? { ...c, status: newStatus } : c))
-    );
-    if (newStatus === 'Resolved') {
-      showToast('Conflict marked as resolved', 'success');
-      addActivity('A conflict was resolved');
-    } else {
-      showToast(`Conflict status updated to ${newStatus}`, 'info');
-      addActivity(`Conflict status updated to ${newStatus}`);
+  const updateConflictStatus = async (conflictId, newStatus) => {
+    if (!isDemoMode) {
+      const c = conflicts.find(x => x.id === conflictId);
+      if (c) await fetch(`${BACKEND_URL}/api/conflicts/${conflictId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...c, status: newStatus })
+      });
     }
+    setConflicts((prev) => prev.map((c) => (c.id === conflictId ? { ...c, status: newStatus } : c)));
+    if (newStatus === 'Resolved') showToast('Conflict marked as resolved', 'success');
+    else showToast(`Conflict status updated to ${newStatus}`, 'info');
   };
 
-  const markConflictResolved = (conflictId) => {
-    updateConflictStatus(conflictId, 'Resolved');
-  };
+  const markConflictResolved = (conflictId) => updateConflictStatus(conflictId, 'Resolved');
 
-  // Convert conflict into Action item
-  const createActionFromConflict = (conflictId) => {
+  const createActionFromConflict = async (conflictId) => {
     const conflict = conflicts.find((c) => c.id === conflictId);
     if (!conflict) return null;
-
-    // Check if an action already exists for this conflict
     const existingAction = actions.find((a) => a.relatedConflictId === conflictId);
     if (existingAction) {
       showToast('Action already exists in Action Center', 'info');
       return existingAction;
     }
 
+    const sourceAName = conflict.sourceA ? conflict.sourceA.documentName : 'Source A';
+    const sourceBName = conflict.sourceB ? conflict.sourceB.documentName : 'Source B';
+
     const newAction = {
-      id: `action-${Date.now()}`,
-      title: 'Verify final submission deadline',
-      source: `${conflict.sourceA.documentName} + ${conflict.sourceB.documentName}`,
-      reason: 'Conflicting deadlines were detected.',
-      priority: conflict.priority,
+      title: 'Verify information',
+      source: `${sourceAName} + ${sourceBName}`,
+      reason: 'Conflict detected',
+      priority: conflict.priority || 'Medium',
       status: 'Pending',
-      due: 'Before final submission',
-      why: 'Two documents contain different deadlines.',
-      relatedConflict: `${conflict.sourceA.documentName} vs ${conflict.sourceB.documentName}`,
+      due: 'Not specified',
+      why: 'Conflict needs resolution',
+      relatedConflict: `${sourceAName} vs ${sourceBName}`,
       relatedConflictId: conflict.id,
-      recommendedNextStep: 'Confirm the correct deadline before submission.',
-      createdAt: 'Just now'
+      recommendedNextStep: 'Review the conflicting information.',
+      createdAt: new Date().toLocaleDateString()
     };
 
+    if (!isDemoMode) {
+      const res = await fetch(`${BACKEND_URL}/api/actions`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newAction)
+      });
+      const data = await res.json();
+      Object.assign(newAction, data);
+      await fetch(`${BACKEND_URL}/api/conflicts/${conflictId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...conflict, actionCreated: true })
+      });
+    } else {
+      newAction.id = `action-${Date.now()}`;
+    }
+
     setActions((prev) => [newAction, ...prev]);
-    setConflicts((prev) =>
-      prev.map((c) => (c.id === conflictId ? { ...c, actionCreated: true } : c))
-    );
+    setConflicts((prev) => prev.map((c) => (c.id === conflictId ? { ...c, actionCreated: true } : c)));
     showToast('Action created successfully', 'success');
-    addActivity(`Action created: ${newAction.title}`);
     return newAction;
   };
 
-  // Manual action creation
-  const createAction = (actionData) => {
+  const createAction = async (actionData) => {
     const newAction = {
-      id: `action-${Date.now()}`,
       title: actionData.title,
       source: actionData.source || 'Manual Entry',
       reason: actionData.reason || actionData.description || 'Action created by user',
@@ -207,110 +232,58 @@ export function WorkflowProvider({ children }) {
       relatedConflict: actionData.relatedConflict || 'None',
       relatedConflictId: null,
       recommendedNextStep: actionData.recommendedNextStep || 'Review and complete task.',
-      createdAt: 'Just now'
+      createdAt: new Date().toLocaleDateString()
     };
+
+    if (!isDemoMode) {
+      const res = await fetch(`${BACKEND_URL}/api/actions`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newAction)
+      });
+      const data = await res.json();
+      Object.assign(newAction, data);
+    } else {
+      newAction.id = `action-${Date.now()}`;
+    }
 
     setActions((prev) => [newAction, ...prev]);
     showToast('Action created successfully', 'success');
     return newAction;
   };
 
-  // Update action status
-  const updateActionStatus = (actionId, newStatus) => {
-    let actionTitle = '';
-    setActions((prev) =>
-      prev.map((a) => {
-        if (a.id === actionId) {
-          actionTitle = a.title;
-          return { ...a, status: newStatus };
-        }
-        return a;
-      })
-    );
-    if (newStatus === 'In Progress') {
-      showToast('Action moved to In Progress', 'info');
-      addActivity(`Action "${actionTitle}" moved to In Progress`);
-    } else if (newStatus === 'Completed') {
-      showToast('Action completed', 'success');
-      addActivity(`Action "${actionTitle}" completed`);
-    } else {
-      showToast(`Action status set to ${newStatus}`, 'info');
+  const updateActionStatus = async (actionId, newStatus) => {
+    if (!isDemoMode) {
+      const a = actions.find(x => x.id === actionId);
+      if (a) await fetch(`${BACKEND_URL}/api/actions/${actionId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...a, status: newStatus })
+      });
     }
+    setActions((prev) => prev.map((a) => a.id === actionId ? { ...a, status: newStatus } : a));
+    if (newStatus === 'Completed') showToast('Action completed', 'success');
   };
 
-  // Delete action (allows testing empty state)
-  const deleteAction = (actionId) => {
+  const deleteAction = async (actionId) => {
+    if (!isDemoMode) await fetch(`${BACKEND_URL}/api/actions/${actionId}`, { method: 'DELETE' });
     setActions((prev) => prev.filter((a) => a.id !== actionId));
     showToast('Action item removed', 'info');
   };
 
-  // Reset to initial demo data
   const resetDemoData = () => {
+    setIsDemoMode(true);
     setDocuments(INITIAL_DOCUMENTS);
     setConflicts(INITIAL_CONFLICTS);
     setActions(INITIAL_ACTIONS);
-    setIsDemoMode(false);
     setDashboardStats({ documents: 2, importantFindings: 2 });
-    setRecentActivity(INITIAL_RECENT_ACTIVITY);
-    showToast('Demo data reset to initial state', 'info');
+    showToast('Demo data reset', 'info');
   };
 
   const enableDemoMode = () => {
     setIsDemoMode(true);
-    setDashboardStats({ documents: 24, importantFindings: 42 });
-    // Expand initial data for demo mode (3 conflicts, 8 action items)
-    setConflicts([
-      INITIAL_CONFLICTS[0],
-      {
-        id: 'conflict-budget-01',
-        title: 'Conflicting Budget Value',
-        status: 'Needs Verification',
-        priority: 'High',
-        description: 'Different budget amounts were found.',
-        sourceA: { documentName: 'Project Proposal', documentType: 'PDF Document', section: 'Budget Overview', deadline: '₹50,000', excerpt: 'Total requested budget is ₹50,000.' },
-        sourceB: { documentName: 'Meeting Report', documentType: 'DOCX Document', section: 'Financials', deadline: '₹60,000', excerpt: 'Budget revised to ₹60,000.' },
-        differenceHighlight: '₹10,000 discrepancy.',
-        whyItMatters: 'Budget must be accurate.',
-        recommendedAction: 'Verify correct budget.',
-        actionCreated: false,
-      },
-      {
-        id: 'conflict-team-01',
-        title: 'Conflicting Team Size',
-        status: 'Under Review',
-        priority: 'Medium',
-        description: 'Different team sizes found.',
-        sourceA: { documentName: 'Project Proposal', documentType: 'PDF Document', section: 'Team', deadline: '4 members', excerpt: 'Team consists of 4 members.' },
-        sourceB: { documentName: 'Requirements', documentType: 'DOCX Document', section: 'Staffing', deadline: '5 members', excerpt: 'Requires 5 members.' },
-        differenceHighlight: '1 member discrepancy.',
-        whyItMatters: 'Resource allocation.',
-        recommendedAction: 'Confirm team size.',
-        actionCreated: false,
-      }
-    ]);
-    
-    const demoActions = [INITIAL_ACTIONS[0]];
-    for (let i = 2; i <= 8; i++) {
-      demoActions.push({
-        id: `action-demo-${i}`,
-        title: i === 2 ? 'Review budget' : i === 3 ? 'Update requirements' : `Sample Action ${i}`,
-        source: 'Multiple Documents',
-        reason: 'Demo generated action',
-        priority: i % 2 === 0 ? 'Medium' : 'Low',
-        status: 'Pending',
-        due: 'Next week',
-        why: 'Required for project progression.',
-        relatedConflict: 'None',
-        relatedConflictId: null,
-        recommendedNextStep: 'Complete this task.',
-        createdAt: 'Just now'
-      });
-    }
-    setActions(demoActions);
-    showToast('Final Demo Mode Activated', 'success');
+    setDocuments(INITIAL_DOCUMENTS);
+    setConflicts(INITIAL_CONFLICTS);
+    setActions(INITIAL_ACTIONS);
+    showToast('Demo Mode Activated', 'success');
   };
 
-  // Computed summary metrics
   const conflictMetrics = {
     total: conflicts.length,
     highPriority: conflicts.filter((c) => c.priority === 'High').length,
@@ -332,27 +305,13 @@ export function WorkflowProvider({ children }) {
   return (
     <WorkflowContext.Provider
       value={{
-        documents,
-        conflicts,
-        actions,
-        recentActivity,
-        toasts,
-        conflictMetrics,
-        actionMetrics,
-        addDocument,
-        removeDocument,
-        updateConflictStatus,
-        markConflictResolved,
-        createActionFromConflict,
-        createAction,
-        updateActionStatus,
-        deleteAction,
-        resetDemoData,
-        enableDemoMode,
-        isDemoMode,
-        dashboardStats,
-        showToast,
-        removeToast
+        documents, conflicts, actions, recentActivity, toasts,
+        conflictMetrics, actionMetrics,
+        addDocument, removeDocument,
+        updateConflictStatus, markConflictResolved,
+        createActionFromConflict, createAction, updateActionStatus, deleteAction,
+        resetDemoData, enableDemoMode, isDemoMode, dashboardStats,
+        showToast, removeToast, aiConfigured, BACKEND_URL
       }}
     >
       {children}
@@ -362,8 +321,6 @@ export function WorkflowProvider({ children }) {
 
 export function useWorkflow() {
   const context = useContext(WorkflowContext);
-  if (!context) {
-    throw new Error('useWorkflow must be used within a WorkflowProvider');
-  }
+  if (!context) throw new Error('useWorkflow must be used within a WorkflowProvider');
   return context;
 }

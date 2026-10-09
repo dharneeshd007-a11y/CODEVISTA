@@ -8,6 +8,7 @@ import {
 import DashboardLayout from '../components/DashboardLayout';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
+import { useWorkflow } from '../context/WorkflowContext';
 
 const DEMO_DOCUMENTS = [
   { id: 'demo-1', name: 'Project Proposal' },
@@ -91,6 +92,7 @@ const INSIGHTS_DATA = {
 };
 
 export default function Insights() {
+  const { documents, isDemoMode, BACKEND_URL } = useWorkflow();
   const location = useLocation();
   
   // Check if a document ID was passed via state (e.g. from DocumentDetails)
@@ -99,6 +101,7 @@ export default function Insights() {
   const [selectedDocId, setSelectedDocId] = useState(initialDocId);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [insightData, setInsightData] = useState(null);
 
   const loadingSteps = [
     "Analyzing document...",
@@ -111,27 +114,53 @@ export default function Insights() {
     if (selectedDocId) {
       setIsLoading(true);
       setLoadingStep(0);
+      setInsightData(null);
       
-      const interval = setInterval(() => {
-        setLoadingStep(prev => {
-          if (prev >= loadingSteps.length - 1) {
-            clearInterval(interval);
+      if (isDemoMode) {
+        const interval = setInterval(() => {
+          setLoadingStep(prev => {
+            if (prev >= loadingSteps.length - 1) {
+              clearInterval(interval);
+              setIsLoading(false);
+              setInsightData(INSIGHTS_DATA[selectedDocId]);
+              return prev;
+            }
+            return prev + 1;
+          });
+        }, 600);
+        return () => clearInterval(interval);
+      } else {
+        const fetchInsights = async () => {
+          try {
+            const doc = documents.find(d => d.id === selectedDocId);
+            let summaryText = doc?.summary;
+            
+            // If no summary yet or not a JSON, generate it
+            if (!summaryText || !summaryText.startsWith('{')) {
+              const res = await fetch(`${BACKEND_URL}/api/documents/${selectedDocId}/summarize`, { method: 'POST' });
+              if (res.ok) {
+                const data = await res.json();
+                summaryText = data.summary;
+              }
+            }
+            
+            if (summaryText) {
+              setInsightData(JSON.parse(summaryText));
+            }
+          } catch (e) {
+            console.error(e);
+          } finally {
             setIsLoading(false);
-            return prev;
           }
-          return prev + 1;
-        });
-      }, 600);
-      
-      return () => clearInterval(interval);
+        };
+        fetchInsights();
+      }
     }
-  }, [selectedDocId, loadingSteps.length]);
+  }, [selectedDocId, isDemoMode, documents]);
 
   const handleDocSelect = (e) => {
     setSelectedDocId(e.target.value);
   };
-
-  const selectedData = INSIGHTS_DATA[selectedDocId];
 
   return (
     <DashboardLayout>
@@ -153,7 +182,7 @@ export default function Insights() {
                 className="w-full glass-input pl-4 pr-10 py-3 rounded-xl text-sm appearance-none cursor-pointer bg-surface-dark border-surface-border text-white"
               >
                 <option value="" disabled>Choose a document...</option>
-                {DEMO_DOCUMENTS.map(doc => (
+                {(isDemoMode ? DEMO_DOCUMENTS : documents).map(doc => (
                   <option key={doc.id} value={doc.id}>{doc.name}</option>
                 ))}
               </select>
@@ -161,12 +190,14 @@ export default function Insights() {
                 <ChevronDownIcon className="w-4 h-4 text-slate-400" />
               </div>
             </div>
-            <div className="mt-2 flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 uppercase tracking-wider flex items-center gap-1 inline-flex">
-                <ShieldAlert className="w-3 h-3" />
-                DEMO DATA
-              </span>
-            </div>
+            {isDemoMode && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 uppercase tracking-wider flex items-center gap-1 inline-flex">
+                  <ShieldAlert className="w-3 h-3" />
+                  DEMO DATA
+                </span>
+              </div>
+            )}
           </div>
         </section>
 
@@ -189,14 +220,16 @@ export default function Insights() {
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-xl font-bold text-white mb-2">{loadingSteps[loadingStep]}</h3>
-              <p className="text-sm text-slate-400">
-                <ShieldAlert className="w-4 h-4 inline-block mr-1 text-amber-500" />
-                Demo Processing (Frontend Prototype Only)
-              </p>
+              <h3 className="text-xl font-bold text-white mb-2">{isDemoMode ? loadingSteps[loadingStep] : "Analyzing document with AI..."}</h3>
+              {isDemoMode && (
+                <p className="text-sm text-slate-400">
+                  <ShieldAlert className="w-4 h-4 inline-block mr-1 text-amber-500" />
+                  Demo Processing (Frontend Prototype Only)
+                </p>
+              )}
             </div>
           </div>
-        ) : selectedData ? (
+        ) : insightData ? (
           <div className="space-y-10 animate-fade-in">
             
             {/* Visual Workflow (Insights -> Action) */}
@@ -249,7 +282,7 @@ export default function Insights() {
                 </span>
               </div>
               <p className="text-slate-300 text-lg leading-relaxed">
-                {selectedData.summary}
+                {insightData.summary}
               </p>
             </section>
 
@@ -257,25 +290,25 @@ export default function Insights() {
             <section>
               <h3 className="text-xl font-bold text-white mb-6">Key Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="glass-card rounded-2xl p-5 border-surface-border">
+                 <div className="glass-card rounded-2xl p-5 border-surface-border">
                    <Calendar className="w-5 h-5 text-brand-400 mb-3" />
                    <h4 className="font-semibold text-white mb-1">Important Dates</h4>
-                   <p className="text-sm text-slate-400 line-clamp-2">{selectedData.importantDates[0]?.date || 'None'}</p>
+                   <p className="text-sm text-slate-400 line-clamp-2">{insightData.importantDates?.[0]?.date || 'None'}</p>
                 </div>
                 <div className="glass-card rounded-2xl p-5 border-surface-border">
                    <FileCheck className="w-5 h-5 text-indigo-400 mb-3" />
                    <h4 className="font-semibold text-white mb-1">Requirements</h4>
-                   <p className="text-sm text-slate-400 line-clamp-2">{selectedData.requirements[0] || 'None'}</p>
+                   <p className="text-sm text-slate-400 line-clamp-2">{insightData.requirements?.[0] || 'None'}</p>
                 </div>
                 <div className="glass-card rounded-2xl p-5 border-surface-border">
                    <CheckSquare className="w-5 h-5 text-emerald-400 mb-3" />
                    <h4 className="font-semibold text-white mb-1">Action Items</h4>
-                   <p className="text-sm text-slate-400 line-clamp-2">{selectedData.actionItems[0]?.title || 'None'}</p>
+                   <p className="text-sm text-slate-400 line-clamp-2">{insightData.actionItems?.[0]?.title || 'None'}</p>
                 </div>
                 <div className="glass-card rounded-2xl p-5 border-surface-border">
                    <Info className="w-5 h-5 text-amber-400 mb-3" />
                    <h4 className="font-semibold text-white mb-1">Important Details</h4>
-                   <p className="text-sm text-slate-400 line-clamp-2">{selectedData.importantDetails[0] || 'None'}</p>
+                   <p className="text-sm text-slate-400 line-clamp-2">{insightData.importantDetails?.[0] || 'None'}</p>
                 </div>
               </div>
             </section>
@@ -290,7 +323,7 @@ export default function Insights() {
                   <span className="text-xs text-slate-400">Sample Extracted Information</span>
                 </div>
                 <div className="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-surface-border before:to-transparent">
-                  {selectedData.importantDates.map((item, idx) => (
+                  {insightData.importantDates?.map((item, idx) => (
                     <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-surface-dark bg-brand-500/20 text-brand-400 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                         <Calendar className="w-4 h-4" />
@@ -312,7 +345,7 @@ export default function Insights() {
                 </div>
                 <div className="glass-card rounded-2xl p-1 border-surface-border">
                   <ul className="divide-y divide-surface-border">
-                    {selectedData.requirements.map((req, idx) => (
+                    {insightData.requirements?.map((req, idx) => (
                       <li key={idx} className="p-4 flex items-start gap-3">
                         <div className="mt-0.5 w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
                           <svg className="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -330,7 +363,7 @@ export default function Insights() {
               <section className="space-y-4">
                 <h3 className="text-xl font-bold text-white">Detected Action Items</h3>
                 <div className="space-y-3">
-                  {selectedData.actionItems.map((action, idx) => (
+                  {insightData.actionItems?.map((action, idx) => (
                     <div key={idx} className="glass-card rounded-xl p-4 border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -360,7 +393,7 @@ export default function Insights() {
                 <h3 className="text-xl font-bold text-white">Important Details</h3>
                 <div className="glass-card rounded-2xl p-5 border-surface-border space-y-3 bg-gradient-to-br from-surface-card/40 to-brand-900/10">
                   <ul className="space-y-3 list-inside">
-                    {selectedData.importantDetails.map((detail, idx) => (
+                    {insightData.importantDetails?.map((detail, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="text-brand-400 font-bold mt-0.5">•</span>
                         <span className="text-slate-200">{detail}</span>
@@ -379,7 +412,7 @@ export default function Insights() {
               <section className="space-y-4">
                 <h3 className="text-xl font-bold text-white">Information Review</h3>
                 <div className="space-y-3">
-                  {selectedData.reviewItems.map((item, idx) => (
+                  {insightData.reviewItems?.map((item, idx) => (
                     <div key={idx} className="glass-card rounded-xl p-4 border-surface-border flex items-center justify-between">
                       <span className="text-slate-300">{item.label}</span>
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -398,7 +431,7 @@ export default function Insights() {
               <section className="space-y-4">
                 <h3 className="text-xl font-bold text-white">Related Sources</h3>
                 <div className="space-y-3">
-                  {selectedData.relatedSources.map((source, idx) => (
+                  {insightData.relatedSources?.map((source, idx) => (
                     <div key={idx} className="glass-card rounded-xl p-4 border-surface-border flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <FileText className="w-5 h-5 text-slate-400" />
