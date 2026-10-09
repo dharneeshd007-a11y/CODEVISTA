@@ -4,7 +4,10 @@ import { Compass, LayoutDashboard, FileText, Search, GitCompare, AlertCircle, Ch
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
-  const { conflictMetrics, actionMetrics } = useWorkflow();
+  const { conflicts, actions } = useWorkflow();
+
+  const unresolvedCount = conflicts ? conflicts.filter(c => c.status !== 'Resolved').length : 0;
+  const activeCount = actions ? actions.filter(a => a.status !== 'completed').length : 0;
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
@@ -21,14 +24,14 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
       name: 'Conflicts',
       icon: AlertCircle,
       path: '/conflicts',
-      badge: conflictMetrics.unresolvedCount > 0 ? conflictMetrics.unresolvedCount : null,
+      badge: unresolvedCount > 0 ? unresolvedCount : null,
       badgeColor: 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
     },
     {
       name: 'Action Center',
       icon: CheckSquare,
       path: '/actions',
-      badge: actionMetrics.activeCount > 0 ? actionMetrics.activeCount : null,
+      badge: activeCount > 0 ? activeCount : null,
       badgeColor: 'bg-brand-500/10 text-brand-400 border border-brand-500/20'
     },
   ];
