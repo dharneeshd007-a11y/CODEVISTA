@@ -60,14 +60,7 @@ export default function Dashboard() {
             <p className="text-slate-400 text-lg mt-1">Turn scattered information into clear, actionable insights.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={() => setIsDemoGuideOpen(true)} className="w-full md:w-auto px-6 py-2.5">
-              Demo Guide
-            </Button>
-            {!isDemoMode && (
-              <Button variant="secondary" onClick={enableDemoMode} className="w-full md:w-auto px-6 py-2.5">
-                Load Demo Data
-              </Button>
-            )}
+
             <Link to="/documents">
               <Button className="w-full md:w-auto px-6 py-2.5 flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -474,7 +467,7 @@ export default function Dashboard() {
 
         </div>
       </div>
-      <DemoGuideModal isOpen={isDemoGuideOpen} onClose={() => setIsDemoGuideOpen(false)} />
+
     </DashboardLayout>
   );
 }

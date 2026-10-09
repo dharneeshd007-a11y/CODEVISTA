@@ -82,7 +82,7 @@ export default function SmartSearch() {
   const [query, setQuery] = useState('');
   const [state, setState] = useState('idle');
   const [results, setResults] = useState([]);
-  const { isDemoMode, BACKEND_URL } = useWorkflow();
+
 
   const handleSearch = async () => {
     if (!query.trim()) return;

@@ -64,7 +64,7 @@ export default function Insights() {
       fetchInsights();
       return () => clearInterval(interval);
     }
-  }, [selectedDocId, isDemoMode, documents]);
+  }, [selectedDocId, documents]);
 
   const handleDocSelect = (e) => {
     setSelectedDocId(e.target.value);

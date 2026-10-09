@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const WorkflowContext = createContext(null);
+const BACKEND_URL = 'http://localhost:5000';
 
 export function WorkflowProvider({ children }) {
   const [documents, setDocuments] = useState([]);
@@ -8,54 +9,6 @@ export function WorkflowProvider({ children }) {
   const [actions, setActions] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [toasts, setToasts] = useState([]);
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [aiConfigured, setAiConfigured] = useState(false);
-
-  const [dashboardStats, setDashboardStats] = useState({
-    documents: 0,
-    importantFindings: 0
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (isDemoMode) return;
-      try {
-        const [docsRes, confRes, actRes, aiRes] = await Promise.all([
-          fetch(`${BACKEND_URL}/api/documents`),
-          fetch(`${BACKEND_URL}/api/conflicts`),
-          fetch(`${BACKEND_URL}/api/actions`),
-          fetch(`${BACKEND_URL}/api/status`)
-        ]);
-        const [docsData, confData, actData, aiData] = await Promise.all([
-          docsRes.json(),
-          confRes.json(),
-          actRes.json(),
-          aiRes.json()
-        ]);
-        setDocuments(docsData || []);
-        setConflicts(confData || []);
-        setActions(actData || []);
-        setAiConfigured(aiData.aiConfigured);
-        setDashboardStats({
-          documents: docsData?.length || 0,
-          importantFindings: (confData?.length || 0) + (actData?.length || 0)
-        });
-      } catch (e) {
-        setIsDemoMode(true);
-      }
-    };
-    fetchData();
-  }, [BACKEND_URL, isDemoMode]);
-
-  useEffect(() => {
-    if (isDemoMode) {
-      setDocuments(INITIAL_DOCUMENTS);
-      setConflicts(INITIAL_CONFLICTS);
-      setActions(INITIAL_ACTIONS);
-      setDashboardStats({ documents: INITIAL_DOCUMENTS.length, importantFindings: INITIAL_CONFLICTS.length });
-    }
-  }, [isDemoMode]);
-
   const token = localStorage.getItem('auth_token');
 
   const fetchDocuments = async () => {
