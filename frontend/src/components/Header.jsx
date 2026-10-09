@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function Header({ toggleSidebar }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showDemoInfo, setShowDemoInfo] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -43,25 +42,7 @@ export default function Header({ toggleSidebar }) {
 
       <div className="flex items-center gap-2 sm:gap-4">
         
-        {/* Demo Mode Badge */}
-        <div className="relative">
-          <button 
-            onClick={() => setShowDemoInfo(!showDemoInfo)}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
-          >
-            <AlertCircle className="w-3 h-3" />
-            DEMO MODE
-          </button>
-          
-          {showDemoInfo && (
-            <div className="absolute top-full right-0 mt-2 w-64 p-3 rounded-xl bg-surface-card border border-surface-border shadow-xl z-50">
-              <div className="flex items-start gap-2 text-slate-300 text-xs">
-                <Info className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
-                <p>Demo Mode uses sample frontend data. Backend and AI processing will be connected in the next implementation stage.</p>
-              </div>
-            </div>
-          )}
-        </div>
+
 
         <button className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-surface-card transition-colors">
           <Search className="w-5 h-5" />

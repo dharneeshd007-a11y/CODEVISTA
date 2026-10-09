@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Lightbulb, AlertTriangle, CheckSquare, Search, GitCompare, Upload, ArrowRight, CheckCircle2 } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import WorkflowCard from '../components/WorkflowCard';
@@ -9,10 +9,36 @@ import Button from '../components/Button';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Dashboard() {
-  const { documents, conflictMetrics, actionMetrics, conflicts, actions, recentActivity } = useWorkflow();
+  const { conflicts, actions, recentActivity } = useWorkflow();
+  const [stats, setStats] = useState({
+    totalDocuments: 0,
+    processedDocuments: 0,
+    duplicateRecords: 0,
+    activeConflicts: 0,
+    pendingActions: 0
+  });
 
-  const activeConflict = conflicts[0];
-  const activeAction = actions[0];
+  useEffect(() => {
+    const fetchStats = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+      try {
+        const res = await fetch('http://localhost:5000/api/dashboard/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchStats();
+  }, [conflicts, actions]); // Refresh stats when conflicts/actions update
+
+  const activeConflict = conflicts.length > 0 ? conflicts[0] : null;
+  const activeAction = actions.length > 0 ? actions[0] : null;
 
   return (
     <DashboardLayout>
@@ -46,25 +72,25 @@ export default function Dashboard() {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <StatCard
             title="Total documents"
-            value={documents.length.toString()}
+            value={stats.totalDocuments.toString()}
             icon={FileText}
           />
           <StatCard
-            title="Important findings"
-            value="2"
-            icon={Lightbulb}
+            title="Processed Documents"
+            value={stats.processedDocuments.toString()}
+            icon={CheckCircle2}
           />
           <StatCard
             title="Need attention"
-            value={conflictMetrics.unresolvedCount.toString()}
+            value={stats.activeConflicts.toString()}
             icon={AlertTriangle}
-            trend={conflictMetrics.unresolvedCount > 0 ? `${conflictMetrics.unresolvedCount} Conflict` : 'Resolved'}
+            trend={stats.activeConflicts > 0 ? `${stats.activeConflicts} Conflict` : 'Resolved'}
           />
           <StatCard
             title="Pending actions"
-            value={actionMetrics.activeCount.toString()}
+            value={stats.pendingActions.toString()}
             icon={CheckSquare}
-            trend={actionMetrics.activeCount > 0 ? `${actionMetrics.activeCount} Active` : 'All Done'}
+            trend={stats.pendingActions > 0 ? `${stats.pendingActions} Active` : 'All Done'}
           />
         </section>
 
@@ -135,8 +161,8 @@ export default function Dashboard() {
                 <QuickActionCard 
                   title="Review Conflicts" 
                   description={
-                    conflictMetrics.unresolvedCount > 0
-                      ? `${conflictMetrics.unresolvedCount} active conflict requires verification`
+                    stats.activeConflicts > 0
+                      ? `${stats.activeConflicts} active conflict requires verification`
                       : 'All conflicts resolved'
                   }
                   icon={AlertTriangle} 
@@ -205,7 +231,7 @@ export default function Dashboard() {
                 <h3 className="text-lg font-semibold text-white">Needs Your Attention</h3>
               </div>
               
-              {conflictMetrics.unresolvedCount > 0 || actionMetrics.pending > 0 ? (
+              {stats.activeConflicts > 0 || stats.pendingActions > 0 ? (
                 <div className="space-y-3">
                   {conflicts.filter(c => c.status !== 'Resolved' && c.priority === 'High').map(conflict => (
                     <div key={conflict.id} className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -213,7 +239,7 @@ export default function Dashboard() {
                         <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
                         <div>
                           <h4 className="text-sm font-bold text-rose-300">⚠ {conflict.title}</h4>
-                          <p className="text-xs text-slate-300 mt-1">{conflict.relatedConflict || conflict.sourceA.documentName + ' vs ' + conflict.sourceB.documentName}</p>
+                          <p className="text-xs text-slate-300 mt-1">{conflict.relatedConflict}</p>
                           <p className="text-[10px] text-slate-400 mt-0.5">Status: {conflict.status}</p>
                         </div>
                       </div>
@@ -359,7 +385,7 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-4">
-                {/* Demo Insight 1 */}
+                {/* Insight 1 */}
                 <div className="glass-card rounded-xl p-5 border border-amber-500/30 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
                   <div className="flex items-start justify-between mb-3">
@@ -381,7 +407,7 @@ export default function Dashboard() {
                   </Link>
                 </div>
 
-                {/* Demo Insight 2 */}
+                {/* Insight 2 */}
                 <div className="glass-card rounded-xl p-5 border border-surface-border">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-semibold text-white flex items-center gap-2">
@@ -400,10 +426,9 @@ export default function Dashboard() {
                     </li>
                   </ul>
                   <div className="text-xs text-slate-500 italic text-center">
-                    Demo Data
+                    Extracted automatically
                   </div>
                 </div>
-              </div>
               </div>
             </section>
           </div>

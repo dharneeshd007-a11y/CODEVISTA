@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { GitCompare, AlertTriangle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 import Button from '../components/Button';
+import { useWorkflow } from '../context/WorkflowContext';
 
-const DocumentSelector = ({ label, selected, onSelect }) => {
+const DocumentSelector = ({ label, selected, onSelect, availableDocs }) => {
   const docs = [
     { id: 'none', name: 'Select a document...' },
-    { id: 'doc-a', name: 'Project Proposal' },
-    { id: 'doc-b', name: 'Project Requirements' },
+    ...availableDocs
   ];
 
   return (
@@ -58,32 +58,40 @@ const ComparisonPanel = ({ title, items, isDiff }) => {
 };
 
 export default function Compare() {
-  const [docA, setDocA] = useState('doc-a');
-  const [docB, setDocB] = useState('doc-b');
+  const { documents } = useWorkflow();
+  const realDocs = documents;
+  
+  const [docA, setDocA] = useState('none');
+  const [docB, setDocB] = useState('none');
   const [isComparing, setIsComparing] = useState(false);
-  const [showResults, setShowResults] = useState(true);
+  const [showResults, setShowResults] = useState(false);
+  const [compareData, setCompareData] = useState(null);
+  const [error, setError] = useState('');
 
   const canCompare = docA !== 'none' && docB !== 'none' && docA !== docB;
 
-  const handleCompare = () => {
+  const handleCompare = async () => {
     if (!canCompare) return;
     setIsComparing(true);
     setShowResults(false);
-    setTimeout(() => {
-      setIsComparing(false);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`http://localhost:5000/api/documents/compare?id1=${docA}&id2=${docB}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Comparison failed. Please try again.');
+      
+      const data = await res.json();
+      setCompareData(data);
       setShowResults(true);
-    }, 1200);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsComparing(false);
+    }
   };
-
-  const itemsA = [
-    { label: 'Deadline', value: '20 October 2026', diff: true },
-    { label: 'Requirement', value: 'Submit project documentation', diff: false }
-  ];
-
-  const itemsB = [
-    { label: 'Deadline', value: '25 October 2026', diff: true },
-    { label: 'Requirement', value: 'Submit project documentation', extra: 'review checklist', diff: true }
-  ];
 
   return (
     <DashboardLayout>
@@ -115,12 +123,21 @@ export default function Compare() {
 
         {/* Document Selection */}
         <div className="bg-surface-card border border-surface-border rounded-3xl p-6 md:p-8 shadow-xl">
-          <div className="flex flex-col md:flex-row items-end gap-6">
-            <DocumentSelector label="Document A" selected={docA} onSelect={setDocA} />
-            <div className="hidden md:flex pb-3 items-center justify-center w-12 h-12 bg-surface-dark rounded-full border border-surface-border text-slate-400 shrink-0">
-              VS
+          {realDocs.length === 0 ? (
+            <div className="text-center py-4 text-slate-400">
+              No documents available. Upload documents to start comparing.
             </div>
-            <DocumentSelector label="Document B" selected={docB} onSelect={setDocB} />
+          ) : realDocs.length === 1 ? (
+            <div className="text-center py-4 text-slate-400">
+              Upload at least one more document to compare.
+            </div>
+          ) : (
+            <div className="flex flex-col md:flex-row items-end gap-6">
+              <DocumentSelector label="Document A" selected={docA} onSelect={setDocA} availableDocs={realDocs} />
+              <div className="hidden md:flex pb-3 items-center justify-center w-12 h-12 bg-surface-dark rounded-full border border-surface-border text-slate-400 shrink-0">
+                VS
+              </div>
+              <DocumentSelector label="Document B" selected={docB} onSelect={setDocB} availableDocs={realDocs} />
             <button
               onClick={handleCompare}
               disabled={!canCompare || isComparing}
@@ -143,6 +160,8 @@ export default function Compare() {
               )}
             </button>
           </div>
+          )}
+          {error && <div className="text-rose-400 text-sm mt-4 text-center">{error}</div>}
         </div>
 
         {/* Empty State */}
@@ -170,13 +189,13 @@ export default function Compare() {
               <div className="bg-surface-card border border-surface-border p-5 rounded-2xl">
                 <div className="text-slate-400 text-sm mb-1">Matching Items</div>
                 <div className="text-2xl font-bold text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5" /> 1
+                  <CheckCircle2 className="w-5 h-5" /> {compareData ? (compareData.doc1.items.length - compareData.conflictCount) : 0}
                 </div>
               </div>
               <div className="bg-surface-card border border-surface-border p-5 rounded-2xl">
                 <div className="text-slate-400 text-sm mb-1">Differences</div>
                 <div className="text-2xl font-bold text-amber-400 flex items-center gap-2">
-                  <GitCompare className="w-5 h-5" /> 2
+                  <GitCompare className="w-5 h-5" /> {compareData ? compareData.conflictCount : 0}
                 </div>
               </div>
               <div className="bg-surface-card border border-amber-500/30 p-5 rounded-2xl relative overflow-hidden">
@@ -184,7 +203,7 @@ export default function Compare() {
                 <div className="relative">
                   <div className="text-amber-200/80 text-sm mb-1">Potential Conflicts</div>
                   <div className="text-2xl font-bold text-amber-400 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" /> 1
+                    <AlertTriangle className="w-5 h-5" /> {compareData ? compareData.conflictCount : 0}
                   </div>
                 </div>
               </div>
@@ -192,61 +211,54 @@ export default function Compare() {
 
             <div className="flex justify-end">
               <span className="text-xs font-semibold tracking-wider uppercase bg-brand-500/10 text-brand-400 px-3 py-1 rounded-full border border-brand-500/20">
-                Demo Comparison
+                Extracted from MySQL
               </span>
             </div>
 
             {/* Conflict Preview */}
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 shadow-lg">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400">
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-amber-300 flex items-center gap-2 mb-2">
-                    Conflict Detected
-                    <span className="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-500/30">
-                      Needs Verification
-                    </span>
-                  </h4>
-                  <p className="text-amber-200/80 mb-6 text-sm">
-                    Different deadlines were found across the selected documents.
-                  </p>
-                  
-                  <div className="grid md:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-surface-dark/50 border border-amber-500/20 rounded-xl p-4">
-                      <div className="text-xs text-amber-500/70 font-semibold uppercase mb-1">Project Proposal</div>
-                      <div className="text-amber-100 font-medium">20 October 2026</div>
-                    </div>
-                    <div className="bg-surface-dark/50 border border-amber-500/20 rounded-xl p-4">
-                      <div className="text-xs text-amber-500/70 font-semibold uppercase mb-1">Project Requirements</div>
-                      <div className="text-amber-100 font-medium">25 October 2026</div>
-                    </div>
+            {compareData && compareData.conflictCount > 0 && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 shadow-lg">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400">
+                    <AlertTriangle className="w-6 h-6" />
                   </div>
-                  
-                  <Link 
-                    to="/conflicts"
-                    className="inline-flex items-center gap-2 bg-amber-500 text-amber-950 font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-400 transition-colors text-sm shadow-md"
-                  >
-                    Review in Conflict Detection <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-amber-300 flex items-center gap-2 mb-2">
+                      Conflict Detected
+                      <span className="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-500/30">
+                        Needs Verification
+                      </span>
+                    </h4>
+                    <p className="text-amber-200/80 mb-6 text-sm">
+                      Differences were found across the selected documents.
+                    </p>
+                    
+                    <Link 
+                      to="/conflicts"
+                      className="inline-flex items-center gap-2 bg-amber-500 text-amber-950 font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-400 transition-colors text-sm shadow-md"
+                    >
+                      Review in Conflict Detection <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Side by side comparison */}
-            <div className="flex flex-col md:flex-row gap-6 mt-8">
-              <ComparisonPanel 
-                title="Project Proposal" 
-                items={itemsA} 
-                isDiff={true} 
-              />
-              <ComparisonPanel 
-                title="Project Requirements" 
-                items={itemsB} 
-                isDiff={true} 
-              />
-            </div>
+            {compareData && (
+              <div className="flex flex-col md:flex-row gap-6 mt-8">
+                <ComparisonPanel 
+                  title={compareData.doc1.name} 
+                  items={compareData.doc1.items} 
+                  isDiff={true} 
+                />
+                <ComparisonPanel 
+                  title={compareData.doc2.name} 
+                  items={compareData.doc2.items} 
+                  isDiff={true} 
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

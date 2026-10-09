@@ -29,12 +29,6 @@ export default function DocumentTable({ documents, onView, onCompare, onDelete }
                   <div>
                     <p className="font-medium text-white flex items-center gap-2">
                       {doc.name}
-                      {doc.isDemo && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 uppercase tracking-wider flex items-center gap-1">
-                          <ShieldAlert className="w-3 h-3" />
-                          Demo Data
-                        </span>
-                      )}
                     </p>
                   </div>
                 </div>

@@ -7,7 +7,7 @@ import ConflictCard from '../components/ConflictCard';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Conflicts() {
-  const { conflicts, resetDemoData } = useWorkflow();
+  const { conflicts } = useWorkflow();
 
   return (
     <DashboardLayout>
@@ -32,16 +32,6 @@ export default function Conflicts() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={resetDemoData}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-surface-card hover:bg-surface-border border border-surface-border transition-colors flex items-center gap-1.5"
-              title="Reset demo data to initial state"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-              Reset Demo
-            </button>
-
             <Link
               to="/actions"
               className="px-4 py-2 rounded-xl text-xs font-semibold text-brand-300 hover:text-white bg-brand-500/10 hover:bg-brand-600/30 border border-brand-500/30 transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(2,132,199,0.15)]"

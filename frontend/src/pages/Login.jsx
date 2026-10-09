@@ -35,13 +35,29 @@ export default function Login() {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({});
     
-    // Simulate API call for Phase 1
-    setTimeout(() => {
-      setIsLoading(false);
-      localStorage.setItem('auth_token', 'demo_token_123');
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, password: formData.password })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to login');
+      }
+      
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       navigate('/dashboard');
-    }, 1500);
+    } catch (err) {
+      setErrors({ email: err.message });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

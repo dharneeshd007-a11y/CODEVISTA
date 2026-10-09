@@ -9,7 +9,14 @@ import EmptyState from '../components/EmptyState';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Actions() {
-  const { actions, actionMetrics, resetDemoData } = useWorkflow();
+  const { actions } = useWorkflow();
+
+  const actionMetrics = {
+    pending: actions.filter(a => a.status === 'Pending' || a.status === 'pending').length,
+    highPriority: actions.filter(a => a.priority === 'High').length,
+    inProgress: actions.filter(a => a.status === 'In Progress').length,
+    completed: actions.filter(a => a.status === 'Completed').length,
+  };
 
   const [filter, setFilter] = useState('ALL'); // 'ALL' | 'Pending' | 'In Progress' | 'Completed'
   const [selectedAction, setSelectedAction] = useState(null);
@@ -70,15 +77,6 @@ export default function Actions() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={resetDemoData}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-surface-card hover:bg-surface-border border border-surface-border transition-colors flex items-center gap-1.5"
-              title="Reset demo data to initial state"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-              Reset Demo
-            </button>
 
             <Link
               to="/conflicts"
@@ -99,20 +97,20 @@ export default function Actions() {
           </div>
         </div>
 
-        {/* Action Summary with Demo Data Indicator */}
+        {/* Action Summary */}
         <section aria-labelledby="action-summary-heading" className="space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20 uppercase tracking-wider">
                 <Sparkles className="w-3 h-3" />
-                Demo Data
+                Action Items
               </span>
               <span className="text-xs text-slate-400">
                 Turn important findings into actionable next steps.
               </span>
             </div>
             <span className="text-xs text-slate-400">
-              {actionMetrics.activeCount} active items requiring execution
+              {actionMetrics.pending + actionMetrics.inProgress} active items requiring execution
             </span>
           </div>
 

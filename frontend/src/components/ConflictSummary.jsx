@@ -3,7 +3,14 @@ import { AlertCircle, Flame, ShieldAlert, CheckCircle2, Sparkles } from 'lucide-
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function ConflictSummary() {
-  const { conflictMetrics } = useWorkflow();
+  const { conflicts } = useWorkflow();
+
+  const conflictMetrics = {
+    total: conflicts.length,
+    highPriority: conflicts.filter(c => c.priority === 'High').length,
+    needsVerification: conflicts.filter(c => c.status === 'Needs Verification' || c.status === 'Active').length,
+    resolved: conflicts.filter(c => c.status === 'Resolved').length
+  };
 
   const cards = [
     {
@@ -38,15 +45,15 @@ export default function ConflictSummary() {
 
   return (
     <div className="space-y-3">
-      {/* Demo Data Label & Product Message */}
+      {/* Product Message */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20 uppercase tracking-wider">
             <Sparkles className="w-3 h-3" />
-            Demo Data
+            Detected Matches
           </span>
           <span className="text-xs text-slate-400">
-            Frontend demonstration prototype — simulated document intelligence
+            Real-time conflict detection across your uploaded documents
           </span>
         </div>
         <p className="text-xs text-slate-400 italic">

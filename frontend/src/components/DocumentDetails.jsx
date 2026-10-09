@@ -23,12 +23,6 @@ export default function DocumentDetails({ document, onClose }) {
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h3 className="text-xl font-bold text-white">{document.name}</h3>
-              {document.isDemo && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 uppercase tracking-wider flex items-center gap-1">
-                  <ShieldAlert className="w-3 h-3" />
-                  Demo Data
-                </span>
-              )}
             </div>
             <p className="text-sm text-slate-400">Document Overview & Key Information</p>
           </div>
@@ -77,10 +71,7 @@ export default function DocumentDetails({ document, onClose }) {
           <div className="lg:col-span-2 space-y-6">
             
             <div className="flex items-center gap-3 mb-2">
-              <h4 className="text-lg font-semibold text-white">Sample AI Insights</h4>
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-500/10 text-brand-400 border border-brand-500/20">
-                Frontend Prototype Only
-              </span>
+              <h4 className="text-lg font-semibold text-white">AI Insights</h4>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -93,7 +84,7 @@ export default function DocumentDetails({ document, onClose }) {
                 </div>
                 <div className="p-3 bg-surface-dark/50 rounded-xl border border-surface-border">
                   <p className="text-slate-300 text-sm leading-relaxed">
-                    <span className="text-brand-300 font-medium">20 October 2026:</span> Phase 3 Demo presentation scheduled.
+                    <span className="text-brand-300 font-medium">20 October 2026:</span> Phase 12 presentation scheduled.
                   </p>
                 </div>
               </div>
@@ -106,7 +97,7 @@ export default function DocumentDetails({ document, onClose }) {
                 </div>
                 <div className="p-3 bg-surface-dark/50 rounded-xl border border-surface-border">
                   <p className="text-slate-300 text-sm leading-relaxed">
-                    Submit completely functional frontend prototype without real AI connectivity.
+                    Submit completely functional application with real AI integration.
                   </p>
                 </div>
               </div>

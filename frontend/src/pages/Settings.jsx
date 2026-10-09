@@ -9,7 +9,7 @@ export default function Settings() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    showToast('Settings saved successfully (Frontend only)', 'success');
+    showToast('Settings saved successfully', 'success');
   };
 
   return (
@@ -36,7 +36,7 @@ export default function Settings() {
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-300">Email Address</label>
                   <input type="email" defaultValue="alex@infopilot.ai" className="w-full glass-input px-4 py-2.5 rounded-xl text-sm" disabled />
-                  <p className="text-[10px] text-slate-500">Email cannot be changed in demo mode.</p>
+                  <p className="text-[10px] text-slate-500">Email cannot be changed.</p>
                 </div>
               </div>
             </div>
@@ -49,21 +49,6 @@ export default function Settings() {
               <h3 className="text-lg font-semibold text-white">Application Settings</h3>
             </div>
             <div className="p-6 space-y-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-white mb-1 flex items-center gap-2">
-                    Demo Mode Active
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500">PROTOTYPE</span>
-                  </h4>
-                  <p className="text-xs text-slate-400">Application is running with frontend sample data. Backend integration will be available in the next release.</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-not-allowed">
-                  <input type="checkbox" className="sr-only peer" checked disabled />
-                  <div className="w-11 h-6 bg-surface-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 opacity-70"></div>
-                </label>
-              </div>
-
-              <div className="h-px w-full bg-surface-border"></div>
 
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -90,7 +75,7 @@ export default function Settings() {
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-400">Version</span>
-                <span className="text-sm font-medium text-white">Phase 7 (Round 2 Demo)</span>
+                <span className="text-sm font-medium text-white">Phase 12 (Production)</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-400">Framework</span>

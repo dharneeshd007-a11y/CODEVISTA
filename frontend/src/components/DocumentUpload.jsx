@@ -41,48 +41,77 @@ export default function DocumentUpload({ onUploadComplete }) {
   };
 
   const handleFileSelect = (file) => {
-    // Only accept demo types roughly
+    // Only accept supported file types
     const ext = file.name.split('.').pop().toLowerCase();
     if (['pdf', 'docx', 'txt', 'csv'].includes(ext)) {
       setSelectedFile({
         name: file.name,
         type: ext.toUpperCase(),
-        size: (file.size / 1024 / 1024).toFixed(2) + ' MB'
+        size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+        rawFile: file
       });
     } else {
       alert("Please select a PDF, DOCX, TXT, or CSV file.");
     }
   };
 
-  const startProcessing = () => {
+  const startProcessing = async () => {
     if (!selectedFile) return;
     
     setIsProcessing(true);
     setProcessStep(0);
     
-    // Simulate processing steps
+    // Simulate initial steps for UX
     let currentStep = 0;
     const interval = setInterval(() => {
       currentStep++;
-      if (currentStep < processSteps.length) {
+      if (currentStep < processSteps.length - 1) {
         setProcessStep(currentStep);
-      } else {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsProcessing(false);
-          setSelectedFile(null);
-          setProcessStep(0);
-          onUploadComplete({
-            id: Date.now(),
-            name: selectedFile.name,
-            type: selectedFile.type,
-            status: 'Processed',
-            lastUpdated: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-            isDemo: false
-          });
-        }, 800);
       }
-    }, 1200);
+    }, 500);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile.rawFile);
+
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('http://localhost:5000/api/documents', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const newDoc = await response.json();
+      
+      clearInterval(interval);
+      setProcessStep(processSteps.length - 1); // Completed
+      
+      setTimeout(() => {
+        setIsProcessing(false);
+        setSelectedFile(null);
+        setProcessStep(0);
+        onUploadComplete({
+          id: newDoc.id,
+          name: newDoc.name,
+          type: newDoc.type,
+          status: newDoc.status,
+          lastUpdated: newDoc.lastUpdated
+        });
+      }, 800);
+
+    } catch (error) {
+      console.error('Upload Error:', error);
+      clearInterval(interval);
+      setIsProcessing(false);
+      setProcessStep(0);
+      alert('Failed to upload document. Please check the backend connection.');
+    }
   };
 
   return (
@@ -119,7 +148,7 @@ export default function DocumentUpload({ onUploadComplete }) {
           <Button variant="secondary" className="max-w-[200px]" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
             Choose Files
           </Button>
-          <p className="text-xs text-slate-500 mt-4">Accepted demo types: PDF, DOCX, TXT, CSV</p>
+          <p className="text-xs text-slate-500 mt-4">Accepted file types: PDF, DOCX, TXT, CSV</p>
         </div>
       )}
 
@@ -169,7 +198,7 @@ export default function DocumentUpload({ onUploadComplete }) {
             />
           </div>
           <p className="text-xs text-brand-300 mt-4 font-medium animate-pulse">
-            Frontend demonstration (No real AI processing)
+            Extracting insights using AI...
           </p>
         </div>
       )}

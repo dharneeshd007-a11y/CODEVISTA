@@ -82,90 +82,37 @@ export default function SmartSearch() {
   const [state, setState] = useState('idle');
   const [results, setResults] = useState([]);
 
-  const demoData = {
-    "What are the deadlines?": [
-      {
-        title: "Project Proposal",
-        type: "Deadline",
-        source: "Project Proposal",
-        content: "The final submission deadline for the proposal is 20 October 2026.",
-        highlight: "20 October 2026"
-      },
-      {
-        title: "Project Requirements",
-        type: "Deadline",
-        source: "Project Requirements",
-        content: "All technical requirements must be reviewed by 25 October 2026.",
-        highlight: "25 October 2026"
-      }
-    ],
-    "What are the project requirements?": [
-      {
-        title: "Project Requirements",
-        type: "Requirement",
-        source: "Project Requirements",
-        content: "Submit project documentation and review checklist before proceeding to Phase 5.",
-        highlight: "Submit project documentation and review checklist"
-      },
-      {
-        title: "Project Proposal",
-        type: "Requirement",
-        source: "Project Proposal",
-        content: "Teams must submit project documentation outlining the architecture.",
-        highlight: "Submit project documentation"
-      }
-    ],
-    "What actions are required?": [
-      {
-        title: "Action Item",
-        type: "Task",
-        source: "Project Requirements",
-        content: "Review checklist must be completed by the lead engineer.",
-        highlight: "Review checklist"
-      }
-    ],
-    "What information is missing?": [
-      {
-        title: "Missing Information",
-        type: "Flag",
-        source: "System Analysis",
-        content: "No budget allocation has been specified in the Project Proposal.",
-        highlight: "No budget allocation"
-      }
-    ]
-  };
-
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!query.trim()) return;
     
     setState('loading');
     
-    setTimeout(() => {
-      const match = Object.keys(demoData).find(k => query.toLowerCase().includes(k.toLowerCase().replace('?', '')));
-      if (match) {
-        setResults(demoData[match]);
-        setState('results');
-      } else if (demoData[query]) {
-        setResults(demoData[query]);
-        setState('results');
-      } else {
-        setResults([]);
-        setState('no-results');
-      }
-    }, 1200);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`http://localhost:5000/api/documents/search?q=${encodeURIComponent(query)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+      
+      const mappedResults = data.map(doc => ({
+        title: doc.name,
+        type: doc.type,
+        source: 'Database',
+        content: doc.summary || 'No text extracted for this document yet.',
+        highlight: query // just a basic highlighting attempt
+      }));
+      
+      setResults(mappedResults);
+      setState(mappedResults.length > 0 ? 'results' : 'no-results');
+    } catch (err) {
+      console.error(err);
+      setResults([]);
+      setState('no-results');
+    }
   };
 
-  const setDemoQuery = (q) => {
-    setQuery(q);
-    
-    setState('loading');
-    setTimeout(() => {
-      setResults(demoData[q] || []);
-      setState(demoData[q] ? 'results' : 'no-results');
-    }, 1000);
-  };
-
-  const hasDeadlineConflict = query.toLowerCase().includes('deadline') && state === 'results';
+  const hasDeadlineConflict = false;
 
   return (
     <DashboardLayout>
@@ -199,37 +146,9 @@ export default function SmartSearch() {
           <SearchInput query={query} setQuery={setQuery} onSearch={handleSearch} />
           
           <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
-            <span className="text-sm text-slate-500 font-medium mr-2">Try asking:</span>
-            {Object.keys(demoData).map((q, i) => (
-              <button
-                key={i}
-                onClick={() => setDemoQuery(q)}
-                className="text-xs px-3 py-1.5 bg-surface-card border border-surface-border rounded-full text-slate-300 hover:text-brand-400 hover:border-brand-500/50 transition-colors"
-              >
-                {q}
-              </button>
-            ))}
+            {/* Removed hardcoded demo suggestions */}
           </div>
         </div>
-
-        {/* Potential Conflict Banner when searching deadlines */}
-        {hasDeadlineConflict && (
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-fade-in">
-            <div className="flex items-center gap-2.5 text-amber-300">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-              <span>
-                <strong>Conflicting Deadlines Detected:</strong> Proposal specifies 20 Oct 2026, while Requirements specifies 25 Oct 2026.
-              </span>
-            </div>
-            <Link
-              to="/conflicts"
-              className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 shrink-0"
-            >
-              Inspect in Conflict Detection
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-        )}
 
         {/* State Management */}
         <div className="transition-all duration-500 ease-in-out">
@@ -263,7 +182,7 @@ export default function SmartSearch() {
                   Relevant Information
                 </h3>
                 <span className="text-xs font-semibold tracking-wider uppercase bg-brand-500/10 text-brand-400 px-3 py-1 rounded-full border border-brand-500/20">
-                  DEMO RESULTS
+                  RESULTS
                 </span>
               </div>
               
