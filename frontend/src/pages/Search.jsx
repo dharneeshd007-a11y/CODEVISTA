@@ -100,12 +100,15 @@ export default function SmartSearch() {
       const mappedResults = data.map(doc => ({
         title: doc.name,
         type: doc.type,
-        source: 'Database',
-        content: doc.summary || 'No text extracted for this document yet.',
-        highlight: query // just a basic highlighting attempt
+        source: doc.name,
+        content: doc.snippet || doc.summary || 'No text extracted for this document yet.',
+        highlight: query // basic highlighting
       }));
       
-      setResults(mappedResults);
+      setResults({
+        answer: `Found ${mappedResults.length} matching documents in your workspace for "${query}".\n\n(Note: Semantic AI conversational search is not currently configured. Showing SQL keyword matches from extracted text.)`,
+        results: mappedResults
+      });
       setState(mappedResults.length > 0 ? 'results' : 'no-results');
     } catch (err) {
       console.error(err);

@@ -205,10 +205,38 @@ app.get('/api/documents/search', authenticateToken, async (req, res) => {
     if (!query) return res.json([]);
     const searchTerm = `%${query}%`;
     const [rows] = await db.query(
-      'SELECT * FROM documents WHERE user_id = ? AND (name LIKE ? OR summary LIKE ?)', 
-      [req.user.id, searchTerm, searchTerm]
+      'SELECT id, name, type, size, status, lastUpdated, summary, extracted_text FROM documents WHERE user_id = ? AND (name LIKE ? OR summary LIKE ? OR extracted_text LIKE ?)', 
+      [req.user.id, searchTerm, searchTerm, searchTerm]
     );
-    res.json(rows);
+
+    const results = rows.map(doc => {
+      let snippet = null;
+      if (doc.extracted_text) {
+        const textLower = doc.extracted_text.toLowerCase();
+        const queryLower = query.toLowerCase();
+        const index = textLower.indexOf(queryLower);
+        if (index !== -1) {
+          const start = Math.max(0, index - 60);
+          const end = Math.min(doc.extracted_text.length, index + query.length + 60);
+          snippet = (start > 0 ? '...' : '') + doc.extracted_text.substring(start, end).replace(/\n/g, ' ') + (end < doc.extracted_text.length ? '...' : '');
+        } else {
+           snippet = doc.extracted_text.substring(0, 150).replace(/\n/g, ' ') + '...';
+        }
+      }
+
+      return {
+        id: doc.id,
+        name: doc.name,
+        type: doc.type,
+        size: doc.size,
+        status: doc.status,
+        lastUpdated: doc.lastUpdated,
+        summary: doc.summary,
+        snippet: snippet
+      };
+    });
+
+    res.json(results);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Search failed' });
