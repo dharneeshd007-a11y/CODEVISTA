@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Calendar, FileCheck, CheckSquare, Info, ShieldAlert, ArrowDown, Lightbulb } from 'lucide-react';
+import { X, Calendar, FileCheck, CheckSquare, ShieldAlert, ArrowDown, Lightbulb } from 'lucide-react';
 import Button from './Button';
 
 export default function DocumentDetails({ document, onClose }) {
@@ -21,10 +21,12 @@ export default function DocumentDetails({ document, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-surface-border bg-surface-card/50">
           <div>
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex items-center gap-3 mb-2">
               <h3 className="text-xl font-bold text-white">{document.name}</h3>
             </div>
-            <p className="text-sm text-slate-400">Document Overview & Key Information</p>
+            <p className="text-sm text-slate-400">
+              Uploaded: {document.lastUpdated || '10 Oct 2026'} • 1.2 MB
+            </p>
           </div>
           <button 
             onClick={onClose}
@@ -74,13 +76,20 @@ export default function DocumentDetails({ document, onClose }) {
               <h4 className="text-lg font-semibold text-white">AI Insights</h4>
             </div>
 
+            {/* Summary */}
+            <div className="bg-surface-card border border-surface-border rounded-xl p-4">
+              <h5 className="text-sm font-semibold text-slate-400 mb-2 uppercase tracking-wider">Summary</h5>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                This document describes the project proposal, key requirements, important deadlines and expected submission details. It serves as the primary source of truth for initial planning.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              {/* Insight Card: Important Dates */}
+              {/* Insight Card: Key Dates */}
               <div className="glass-card rounded-2xl p-5 hover:border-brand-500/30 transition-colors">
                 <div className="flex items-center gap-3 mb-3 text-brand-400">
                   <Calendar className="w-5 h-5" />
-                  <h5 className="font-semibold text-white">Important Dates</h5>
+                  <h5 className="font-semibold text-white">Key Dates</h5>
                 </div>
                 <div className="p-3 bg-surface-dark/50 rounded-xl border border-surface-border">
                   <p className="text-slate-300 text-sm leading-relaxed">
@@ -89,11 +98,11 @@ export default function DocumentDetails({ document, onClose }) {
                 </div>
               </div>
 
-              {/* Insight Card: Requirements */}
+              {/* Insight Card: Key Amounts */}
               <div className="glass-card rounded-2xl p-5 hover:border-indigo-500/30 transition-colors">
                 <div className="flex items-center gap-3 mb-3 text-indigo-400">
                   <FileCheck className="w-5 h-5" />
-                  <h5 className="font-semibold text-white">Requirements</h5>
+                  <h5 className="font-semibold text-white">Key Amounts</h5>
                 </div>
                 <div className="p-3 bg-surface-dark/50 rounded-xl border border-surface-border">
                   <p className="text-slate-300 text-sm leading-relaxed">
@@ -102,37 +111,54 @@ export default function DocumentDetails({ document, onClose }) {
                 </div>
               </div>
 
-              {/* Insight Card: Action Items */}
+              {/* Insight Card: Requirements */}
               <div className="glass-card rounded-2xl p-5 hover:border-emerald-500/30 transition-colors">
                 <div className="flex items-center gap-3 mb-3 text-emerald-400">
                   <CheckSquare className="w-5 h-5" />
-                  <h5 className="font-semibold text-white">Action Items</h5>
+                  <h5 className="font-semibold text-white">Requirements</h5>
                 </div>
                 <div className="p-3 bg-surface-dark/50 rounded-xl border border-surface-border space-y-2">
-                  <label className="flex items-start gap-2 cursor-not-allowed">
-                    <input type="checkbox" className="mt-1 bg-surface-dark border-surface-border rounded text-emerald-500 focus:ring-emerald-500" disabled />
-                    <span className="text-slate-300 text-sm">Review final design requirements</span>
-                  </label>
-                  <label className="flex items-start gap-2 cursor-not-allowed">
-                    <input type="checkbox" className="mt-1 bg-surface-dark border-surface-border rounded text-emerald-500 focus:ring-emerald-500" disabled />
-                    <span className="text-slate-300 text-sm">Verify responsive layouts</span>
-                  </label>
+                  <div className="text-slate-300 text-sm flex items-start gap-2">
+                    <span className="text-emerald-400">•</span> Submit completely functional frontend prototype.
+                  </div>
+                  <div className="text-slate-300 text-sm flex items-start gap-2">
+                    <span className="text-emerald-400">•</span> Ensure responsive design across devices.
+                  </div>
                 </div>
               </div>
 
-              {/* Insight Card: Important Details */}
+              {/* Insight Card: Important Information & Insights */}
               <div className="glass-card rounded-2xl p-5 hover:border-amber-500/30 transition-colors">
                 <div className="flex items-center gap-3 mb-3 text-amber-400">
-                  <Info className="w-5 h-5" />
-                  <h5 className="font-semibold text-white">Important Details</h5>
+                  <Lightbulb className="w-5 h-5" />
+                  <h5 className="font-semibold text-white">AI Insights</h5>
                 </div>
                 <div className="p-3 bg-surface-dark/50 rounded-xl border border-surface-border">
                   <p className="text-slate-300 text-sm leading-relaxed">
-                    Final submission must adhere strictly to the specified components and visually connect the workflow stages.
+                    The document implies a strict adherence to visually connecting workflow stages without relying on real backend APIs.
                   </p>
                 </div>
               </div>
+            </div>
 
+            {/* Action Items */}
+            <div className="bg-surface-card border border-surface-border rounded-xl p-4">
+              <h5 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                <CheckSquare className="w-4 h-4" /> Detected Action Items
+              </h5>
+              <div className="space-y-2">
+                <label className="flex items-start gap-3 p-3 bg-surface-dark/50 border border-surface-border rounded-lg cursor-not-allowed">
+                  <input type="checkbox" className="mt-0.5 bg-surface-dark border-surface-border rounded text-brand-500 focus:ring-brand-500" disabled />
+                  <div className="flex-1">
+                    <span className="text-slate-200 text-sm font-medium block">Review final design requirements</span>
+                    <span className="text-slate-400 text-xs">Assigned to team • High Priority</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="text-xs text-slate-500 text-right">
+              Source Reference: Extracted via Demo Parsing Engine v1.0
             </div>
 
           </div>

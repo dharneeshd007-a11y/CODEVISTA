@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Compass, LayoutDashboard, FileText, Search, GitCompare, AlertCircle, CheckSquare, Settings, LogOut, Menu, X, Lightbulb } from 'lucide-react';
+import { Compass, LayoutDashboard, FileText, Search, GitCompare, AlertCircle, CheckSquare, Settings, LogOut, X, Lightbulb } from 'lucide-react';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Sidebar({ isOpen, toggleSidebar }) {

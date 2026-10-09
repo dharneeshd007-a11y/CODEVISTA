@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { 
   Lightbulb, ShieldAlert, Calendar, FileCheck, CheckSquare, 
-  Info, AlertTriangle, ArrowRight, BookOpen, Search, GitCompare,
+  Info, ArrowRight, BookOpen, Search, GitCompare,
   FileText
 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
@@ -11,6 +11,7 @@ import EmptyState from '../components/EmptyState';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Insights() {
+  const { documents, isDemoMode, BACKEND_URL } = useWorkflow();
   const location = useLocation();
   const navigate = useNavigate();
   const { documents } = useWorkflow();
@@ -64,7 +65,7 @@ export default function Insights() {
       fetchInsights();
       return () => clearInterval(interval);
     }
-  }, [selectedDocId]);
+  }, [selectedDocId, isDemoMode, documents]);
 
   const handleDocSelect = (e) => {
     setSelectedDocId(e.target.value);
@@ -185,7 +186,7 @@ export default function Insights() {
             <section>
               <h3 className="text-xl font-bold text-white mb-6">Key Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="glass-card rounded-2xl p-5 border-surface-border">
+                 <div className="glass-card rounded-2xl p-5 border-surface-border">
                    <Calendar className="w-5 h-5 text-brand-400 mb-3" />
                    <h4 className="font-semibold text-white mb-1">Important Dates</h4>
                    <p className="text-sm text-slate-400 line-clamp-2">{insightsData.important_dates?.[0]?.date || insightsData.important_dates?.[0]?.value || 'None'}</p>

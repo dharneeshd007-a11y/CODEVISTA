@@ -15,8 +15,8 @@ export default function Documents() {
   const [filterType, setFilterType] = useState('All');
   const [selectedDoc, setSelectedDoc] = useState(null);
 
-  const handleUploadComplete = (newDoc) => {
-    addDocument(newDoc);
+  const handleUploadComplete = async (file) => {
+    await addDocument(file);
   };
 
   const handleDelete = (id) => {

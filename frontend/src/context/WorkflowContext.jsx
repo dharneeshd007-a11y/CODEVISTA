@@ -8,6 +8,53 @@ export function WorkflowProvider({ children }) {
   const [actions, setActions] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [toasts, setToasts] = useState([]);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [aiConfigured, setAiConfigured] = useState(false);
+
+  const [dashboardStats, setDashboardStats] = useState({
+    documents: 0,
+    importantFindings: 0
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (isDemoMode) return;
+      try {
+        const [docsRes, confRes, actRes, aiRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/api/documents`),
+          fetch(`${BACKEND_URL}/api/conflicts`),
+          fetch(`${BACKEND_URL}/api/actions`),
+          fetch(`${BACKEND_URL}/api/status`)
+        ]);
+        const [docsData, confData, actData, aiData] = await Promise.all([
+          docsRes.json(),
+          confRes.json(),
+          actRes.json(),
+          aiRes.json()
+        ]);
+        setDocuments(docsData || []);
+        setConflicts(confData || []);
+        setActions(actData || []);
+        setAiConfigured(aiData.aiConfigured);
+        setDashboardStats({
+          documents: docsData?.length || 0,
+          importantFindings: (confData?.length || 0) + (actData?.length || 0)
+        });
+      } catch (e) {
+        setIsDemoMode(true);
+      }
+    };
+    fetchData();
+  }, [BACKEND_URL, isDemoMode]);
+
+  useEffect(() => {
+    if (isDemoMode) {
+      setDocuments(INITIAL_DOCUMENTS);
+      setConflicts(INITIAL_CONFLICTS);
+      setActions(INITIAL_ACTIONS);
+      setDashboardStats({ documents: INITIAL_DOCUMENTS.length, importantFindings: INITIAL_CONFLICTS.length });
+    }
+  }, [isDemoMode]);
 
   const token = localStorage.getItem('auth_token');
 
@@ -70,8 +117,38 @@ export function WorkflowProvider({ children }) {
     }, 3500);
   };
 
-  const removeToast = (id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+  const removeToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
+
+  const addDocument = async (file) => {
+    if (isDemoMode) {
+      const newDoc = {
+        id: `demo-${Date.now()}`,
+        name: file.name,
+        type: file.name.split('.').pop().toUpperCase(),
+        status: 'Processed',
+        lastUpdated: new Date().toLocaleDateString(),
+        isDemo: true
+      };
+      setDocuments([newDoc, ...documents]);
+      showToast('Document processed (Demo)', 'success');
+      return newDoc;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      showToast('Uploading document...', 'info');
+      const res = await fetch(`${BACKEND_URL}/api/documents`, { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Upload failed');
+      const newDoc = await res.json();
+      setDocuments(prev => [newDoc, ...prev]);
+      addActivity(`Document "${newDoc.name}" was added`);
+      showToast('Document uploaded successfully', 'success');
+      return newDoc;
+    } catch (e) {
+      showToast('Failed to upload document', 'error');
+      throw e;
+    }
   };
 
   const addDocument = (doc) => {
@@ -121,6 +198,9 @@ export function WorkflowProvider({ children }) {
       showToast('Failed to create action', 'error');
       console.error(err);
     }
+    setConflicts((prev) => prev.map((c) => (c.id === conflictId ? { ...c, status: newStatus } : c)));
+    if (newStatus === 'Resolved') showToast('Conflict marked as resolved', 'success');
+    else showToast(`Conflict status updated to ${newStatus}`, 'info');
   };
 
   const updateActionStatus = async (actionId, newStatus) => {
@@ -218,8 +298,6 @@ export function WorkflowProvider({ children }) {
 
 export function useWorkflow() {
   const context = useContext(WorkflowContext);
-  if (!context) {
-    throw new Error('useWorkflow must be used within a WorkflowProvider');
-  }
+  if (!context) throw new Error('useWorkflow must be used within a WorkflowProvider');
   return context;
 }

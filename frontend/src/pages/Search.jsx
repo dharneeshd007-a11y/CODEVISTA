@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { Search as SearchIcon, FileText, ArrowRight, Loader2, Sparkles, X, AlertTriangle } from 'lucide-react';
+import { useWorkflow } from '../context/WorkflowContext';
 
 const SearchInput = ({ query, setQuery, onSearch }) => {
   return (
@@ -81,6 +82,7 @@ export default function SmartSearch() {
   const [query, setQuery] = useState('');
   const [state, setState] = useState('idle');
   const [results, setResults] = useState([]);
+  const { isDemoMode, BACKEND_URL } = useWorkflow();
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -174,12 +176,45 @@ export default function SmartSearch() {
             </div>
           )}
 
-          {state === 'results' && (
+          {state === 'results' && results && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center justify-between pb-4 border-b border-surface-border">
+              
+              {/* AI Conversational Answer */}
+              <div className="bg-brand-500/10 border border-brand-500/20 rounded-3xl p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <Sparkles className="w-6 h-6 text-brand-400" />
+                  <h3 className="text-xl font-bold text-white">AI Answer</h3>
+                </div>
+                <div className="text-slate-200 text-lg whitespace-pre-wrap leading-relaxed">
+                  {results.answer}
+                </div>
+                {results.conflict && (
+                  <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                    <div className="flex items-start gap-2 text-amber-400">
+                      <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="block mb-1">Conflict detected:</strong>
+                        <span className="text-amber-200/80">{results.conflict}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="mt-6 pt-6 border-t border-brand-500/20">
+                  <h4 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">Sources Consulted</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(new Set(results.results.map(r => r.source))).map((src, i) => (
+                      <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-dark border border-surface-border rounded-lg text-sm text-slate-300">
+                        <FileText className="w-3.5 h-3.5 text-brand-400" />
+                        {src}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pb-4 mt-12 border-b border-surface-border">
                 <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-brand-400" /> 
-                  Relevant Information
+                  Extracted Information Segments
                 </h3>
                 <span className="text-xs font-semibold tracking-wider uppercase bg-brand-500/10 text-brand-400 px-3 py-1 rounded-full border border-brand-500/20">
                   RESULTS
@@ -187,7 +222,7 @@ export default function SmartSearch() {
               </div>
               
               <div className="grid gap-4">
-                {results.map((res, i) => (
+                {results.results.map((res, i) => (
                   <SearchResult key={i} {...res} />
                 ))}
               </div>

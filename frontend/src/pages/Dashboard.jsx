@@ -4,7 +4,8 @@ import StatCard from '../components/StatCard';
 import WorkflowCard from '../components/WorkflowCard';
 import QuickActionCard from '../components/QuickActionCard';
 import DashboardLayout from '../components/DashboardLayout';
-import { Link } from 'react-router-dom';
+import DemoGuideModal from '../components/DemoGuideModal';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { useWorkflow } from '../context/WorkflowContext';
 
@@ -59,6 +60,14 @@ export default function Dashboard() {
             <p className="text-slate-400 text-lg mt-1">Turn scattered information into clear, actionable insights.</p>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={() => setIsDemoGuideOpen(true)} className="w-full md:w-auto px-6 py-2.5">
+              Demo Guide
+            </Button>
+            {!isDemoMode && (
+              <Button variant="secondary" onClick={enableDemoMode} className="w-full md:w-auto px-6 py-2.5">
+                Load Demo Data
+              </Button>
+            )}
             <Link to="/documents">
               <Button className="w-full md:w-auto px-6 py-2.5 flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -171,6 +180,48 @@ export default function Dashboard() {
               </div>
             </section>
 
+            {/* Intelligent Insights (Phase 7) */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-brand-400" /> Intelligent Insights
+                </h3>
+                <Link to="/insights" className="text-xs text-brand-400 hover:text-brand-300 font-medium">View All</Link>
+              </div>
+              <div className="space-y-3">
+                <div className="bg-surface-card border border-surface-border p-4 rounded-xl flex items-start gap-3">
+                  <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg shrink-0 mt-0.5">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-white text-sm">Conflicting information detected</h5>
+                    <p className="text-slate-400 text-xs mt-1">Found 3 discrepancies across Project Proposal and Requirements.</p>
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] uppercase font-bold tracking-wider rounded">High Priority</span>
+                  </div>
+                </div>
+                <div className="bg-surface-card border border-surface-border p-4 rounded-xl flex items-start gap-3">
+                  <div className="p-2 bg-rose-500/10 text-rose-400 rounded-lg shrink-0 mt-0.5">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-white text-sm">Important deadline approaching</h5>
+                    <p className="text-slate-400 text-xs mt-1">Phase 3 Demo is scheduled for 20 October 2026.</p>
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-rose-500/20 text-rose-400 text-[10px] uppercase font-bold tracking-wider rounded">High Priority</span>
+                  </div>
+                </div>
+                <div className="bg-surface-card border border-surface-border p-4 rounded-xl flex items-start gap-3">
+                  <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-white text-sm">Multiple documents mention the same requirement</h5>
+                    <p className="text-slate-400 text-xs mt-1">Both Proposal and Requirements specify "Submit project documentation".</p>
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] uppercase font-bold tracking-wider rounded">Low Priority</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* Active Attention & Next Steps (Phase 5 Feature) */}
             <section>
               <div className="flex items-center justify-between mb-4">
@@ -272,30 +323,6 @@ export default function Dashboard() {
           </div>
 
           <div className="xl:col-span-1 space-y-8">
-            {/* Recent Activity Section */}
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
-              </div>
-              
-              {recentActivity && recentActivity.length > 0 ? (
-                <div className="space-y-3">
-                  {recentActivity.map((activity, index) => (
-                    <div key={activity.id || index} className="p-3 rounded-xl bg-surface-card border border-surface-border flex items-start gap-3">
-                      <div className="w-2 h-2 rounded-full bg-brand-500 mt-1.5 shrink-0" />
-                      <div>
-                        <p className="text-xs text-white">{activity.message}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{activity.timestamp}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="glass-card rounded-2xl p-6 text-center border-dashed border-2 border-surface-border">
-                  <p className="text-xs text-slate-400">No recent activity.</p>
-                </div>
-              )}
-            </section>
             {/* Recent Insights / Conflict Spotlight */}
             <section>
               <div className="flex items-center justify-between mb-4">
@@ -351,34 +378,46 @@ export default function Dashboard() {
               )}
             </section>
 
-            {/* Document Sources */}
+            {/* Recent Documents */}
             <section>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Active Sources</h3>
-                <Link to="/documents" className="text-sm text-brand-400 hover:text-brand-300 font-medium">View all</Link>
-              </div>
-
-              <div className="space-y-2.5">
-                {documents.slice(0, 3).map(doc => (
-                  <div key={doc.id} className="p-3.5 rounded-xl bg-surface-card border border-surface-border flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
+              <div className="bg-surface-card border border-surface-border rounded-2xl p-6 mb-8 mt-8">
+                <h3 className="text-lg font-semibold text-white mb-4">Recent Documents</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-dark/50 border border-surface-border">
+                    <div className="flex items-center gap-3">
                       <FileText className="w-4 h-4 text-brand-400" />
                       <div>
-                        <div className="text-xs font-bold text-white">{doc.name}</div>
-                        <div className="text-[11px] text-slate-400">{doc.type} • {doc.lastUpdated}</div>
+                        <p className="text-sm font-medium text-white">Project Proposal.pdf</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">Processed 2 mins ago</p>
                       </div>
                     </div>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
-                      doc.status === 'Processed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-brand-500/10 text-brand-400'
-                    }`}>
-                      {doc.status}
-                    </span>
+                    <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">READY</span>
                   </div>
-                ))}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-dark/50 border border-surface-border">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-4 h-4 text-brand-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">Meeting Report.docx</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">Processed 5 mins ago</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">READY</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-dark/50 border border-surface-border">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-4 h-4 text-brand-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">Requirements.pdf</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wider">Processed 1 hour ago</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">READY</span>
+                  </div>
+                </div>
               </div>
             </section>
 
-            {/* Recent Insights */}
+            {/* Recent AI Questions */}
             <section>
               <div className="flex items-center justify-between mb-4 mt-8">
                 <h3 className="text-lg font-semibold text-white">Recent Insights</h3>
@@ -406,6 +445,8 @@ export default function Dashboard() {
                     </Button>
                   </Link>
                 </div>
+              </div>
+            </section>
 
                 {/* Insight 2 */}
                 <div className="glass-card rounded-xl p-5 border border-surface-border">
@@ -435,6 +476,7 @@ export default function Dashboard() {
 
         </div>
       </div>
+      <DemoGuideModal isOpen={isDemoGuideOpen} onClose={() => setIsDemoGuideOpen(false)} />
     </DashboardLayout>
   );
 }
