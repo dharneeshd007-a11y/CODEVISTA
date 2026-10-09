@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
+const pdfParse = require('pdf-parse');
 
 const app = express();
 app.use(cors());
@@ -155,9 +156,22 @@ app.post('/api/documents', authenticateToken, upload.single('file'), async (req,
       duplicate_of = existing[0].id;
     }
 
+    let extractedText = null;
+    if (type === 'PDF') {
+      try {
+        const dataBuffer = fs.readFileSync(file.path);
+        const data = await pdfParse(dataBuffer);
+        if (data && data.text) {
+          extractedText = data.text.trim();
+        }
+      } catch (err) {
+        console.error('PDF Extraction Error:', err);
+      }
+    }
+
     await db.query(
-      'INSERT INTO documents (id, user_id, name, type, size, status, lastUpdated, duplicate_status, duplicate_of) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, user_id, name, type, size, status, lastUpdated, duplicate_status, duplicate_of]
+      'INSERT INTO documents (id, user_id, name, type, size, status, lastUpdated, duplicate_status, duplicate_of, extracted_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, user_id, name, type, size, status, lastUpdated, duplicate_status, duplicate_of, extractedText]
     );
 
     const [newDoc] = await db.query('SELECT * FROM documents WHERE id = ?', [id]);
@@ -218,23 +232,33 @@ app.get('/api/documents/compare', authenticateToken, async (req, res) => {
     const doc1 = docs.find(d => d.id === id1);
     const doc2 = docs.find(d => d.id === id2);
 
-    // Simple comparison logic based on available DB fields
+    // Extract fields from text
     const items1 = [];
     const items2 = [];
+    const extractField = (text, fieldRegex, fallback) => {
+      if (!text) return fallback;
+      const match = text.match(fieldRegex);
+      return match ? match[1].trim() : fallback;
+    };
 
-    // Simulate comparison based on size and dates (or anything available)
-    items1.push({ label: 'File Type', value: doc1.type, diff: doc1.type !== doc2.type });
-    items2.push({ label: 'File Type', value: doc2.type, diff: doc1.type !== doc2.type });
+    const t1 = doc1.extracted_text || '';
+    const t2 = doc2.extracted_text || '';
 
-    items1.push({ label: 'File Size', value: doc1.size, diff: doc1.size !== doc2.size });
-    items2.push({ label: 'File Size', value: doc2.size, diff: doc1.size !== doc2.size });
+    const fields = [
+      { label: 'Start Date', regex: /start date[:\-]?\s*(.+)/i },
+      { label: 'Submission Deadline', regex: /submission deadline[:\-]?\s*(.+)/i },
+      { label: 'Budget', regex: /budget[:\-]?\s*(.+)/i },
+      { label: 'Team Size', regex: /team size[:\-]?\s*(.+)/i },
+      { label: 'Requirements', regex: /requirements[:\-]?\s*(.+)/i }
+    ];
 
-    if (doc1.summary && doc2.summary) {
-       items1.push({ label: 'Summary', value: doc1.summary, diff: doc1.summary !== doc2.summary });
-       items2.push({ label: 'Summary', value: doc2.summary, diff: doc1.summary !== doc2.summary });
-    } else {
-       items1.push({ label: 'Summary', value: doc1.summary || 'Not extracted', diff: false });
-       items2.push({ label: 'Summary', value: doc2.summary || 'Not extracted', diff: false });
+    for (const f of fields) {
+      const v1 = extractField(t1, f.regex, 'Not extracted');
+      const v2 = extractField(t2, f.regex, 'Not extracted');
+      const diff = v1 !== v2 && v1 !== 'Not extracted' && v2 !== 'Not extracted';
+      
+      items1.push({ label: f.label, value: v1, diff });
+      items2.push({ label: f.label, value: v2, diff });
     }
 
     res.json({
