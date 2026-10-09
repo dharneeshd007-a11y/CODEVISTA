@@ -445,8 +445,6 @@ export default function Dashboard() {
                     </Button>
                   </Link>
                 </div>
-              </div>
-            </section>
 
                 {/* Insight 2 */}
                 <div className="glass-card rounded-xl p-5 border border-surface-border">

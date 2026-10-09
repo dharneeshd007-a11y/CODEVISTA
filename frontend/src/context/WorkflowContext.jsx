@@ -119,37 +119,7 @@ export function WorkflowProvider({ children }) {
 
   const removeToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
 
-  const addDocument = async (file) => {
-    if (isDemoMode) {
-      const newDoc = {
-        id: `demo-${Date.now()}`,
-        name: file.name,
-        type: file.name.split('.').pop().toUpperCase(),
-        status: 'Processed',
-        lastUpdated: new Date().toLocaleDateString(),
-        isDemo: true
-      };
-      setDocuments([newDoc, ...documents]);
-      showToast('Document processed (Demo)', 'success');
-      return newDoc;
-    }
 
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      showToast('Uploading document...', 'info');
-      const res = await fetch(`${BACKEND_URL}/api/documents`, { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Upload failed');
-      const newDoc = await res.json();
-      setDocuments(prev => [newDoc, ...prev]);
-      addActivity(`Document "${newDoc.name}" was added`);
-      showToast('Document uploaded successfully', 'success');
-      return newDoc;
-    } catch (e) {
-      showToast('Failed to upload document', 'error');
-      throw e;
-    }
-  };
 
   const addDocument = (doc) => {
     setDocuments((prev) => [doc, ...prev]);
