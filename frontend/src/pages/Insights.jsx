@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { 
   Lightbulb, ShieldAlert, Calendar, FileCheck, CheckSquare, 
   Info, ArrowRight, BookOpen, Search, GitCompare,
@@ -11,10 +11,9 @@ import EmptyState from '../components/EmptyState';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function Insights() {
-  const { documents, isDemoMode, BACKEND_URL } = useWorkflow();
+  const { documents } = useWorkflow();
   const location = useLocation();
   const navigate = useNavigate();
-  const { documents } = useWorkflow();
   
   const initialDocId = location.state?.documentId || '';
   
