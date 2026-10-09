@@ -245,11 +245,11 @@ app.get('/api/documents/compare', authenticateToken, async (req, res) => {
     const t2 = doc2.extracted_text || '';
 
     const fields = [
-      { label: 'Start Date', regex: /start date[:\-]?\s*(.+)/i },
-      { label: 'Submission Deadline', regex: /submission deadline[:\-]?\s*(.+)/i },
-      { label: 'Budget', regex: /budget[:\-]?\s*(.+)/i },
-      { label: 'Team Size', regex: /team size[:\-]?\s*(.+)/i },
-      { label: 'Requirements', regex: /requirements[:\-]?\s*(.+)/i }
+      { label: 'Start Date', regex: /start date[^\d\w]*(\d{1,2}\s+[a-z]+\s+\d{4})/i },
+      { label: 'Submission Deadline', regex: /submission\s*deadline[^\d\w]*(\d{1,2}\s+[a-z]+\s+\d{4})/i },
+      { label: 'Budget', regex: /budget[^\d\w]*(Rs\.?\s*\d+,\d+|\₹?\s*\d+,\d+|\d+)/i },
+      { label: 'Team Size', regex: /team size[^\d\w]*(\d+\s*[a-z]*)/i },
+      { label: 'Requirements', regex: /requirements[^\d\w]*([\w\s,]+)/i }
     ];
 
     for (const f of fields) {
