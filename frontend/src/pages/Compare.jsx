@@ -32,42 +32,30 @@ const DocumentSelector = ({ label, selected, onSelect, availableDocs }) => {
   );
 };
 
-const ComparisonTable = ({ docA, docB, items }) => {
+const ComparisonPanel = ({ title, items, isDiff }) => {
   return (
-    <div className="bg-surface-card border border-surface-border rounded-2xl overflow-hidden shadow-xl mt-8">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-surface-dark border-b border-surface-border">
-              <th className="py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Field</th>
-              <th className="py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">{docA}</th>
-              <th className="py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">{docB}</th>
-              <th className="py-4 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-surface-border">
-            {items.map((item, i) => (
-              <tr key={i} className="hover:bg-surface-dark/30 transition-colors">
-                <td className="py-4 px-6 text-sm font-medium text-slate-200">{item.field}</td>
-                <td className="py-4 px-6 text-sm text-slate-300">{item.valA}</td>
-                <td className="py-4 px-6 text-sm text-slate-300">{item.valB}</td>
-                <td className="py-4 px-6">
-                  {item.status === 'Conflict' ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      <AlertTriangle className="w-3 h-3" />
-                      Conflict
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Match
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="flex-1 bg-surface-card border border-surface-border rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-surface-dark px-6 py-4 border-b border-surface-border">
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
+      </div>
+      <div className="p-6 space-y-4">
+        {items.map((item, i) => (
+          <div key={i} className={`p-4 rounded-xl border ${item.diff && isDiff ? 'border-amber-500/30 bg-amber-500/5' : 'border-surface-border/50 bg-surface-dark/50'}`}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1">{item.label}</span>
+                <span className={`text-sm ${item.diff && isDiff ? 'text-amber-200' : 'text-slate-200'}`}>
+                  {item.value}
+                </span>
+              </div>
+              {item.diff && isDiff && (
+                <span className="shrink-0 bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-500/30">
+                  Different
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
